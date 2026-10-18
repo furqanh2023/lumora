@@ -242,7 +242,7 @@ export function AdminUsersPage() {
   }), [users, search, statusFilter]);
   const pageSize = 25;
   const pageCount = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
-  const pageUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
+  const pageUsers = useMemo(() => filteredUsers.slice((page - 1) * pageSize, page * pageSize), [filteredUsers, page]);
   useEffect(() => { setPage(1); }, [search, statusFilter]);
   useEffect(() => {
     let active = true;
@@ -256,7 +256,7 @@ export function AdminUsersPage() {
       }
     })).then((rows) => { if (active) setPublicProfiles((old) => ({ ...old, ...Object.fromEntries(rows) })); });
     return () => { active = false; };
-  }, [pageUsers.map((item) => item.id).join("|"), profileRefreshKey]);
+  }, [pageUsers, profileRefreshKey]);
 
   const confirmSuspension = async () => {
     if (!pendingUser) return;
