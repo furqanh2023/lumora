@@ -1,0 +1,401 @@
+:root{--social-ink:#19213d;--social-muted:#707a93;--social-line:#e8eaf5;--social-surface:#fff;--social-canvas:#f6f7fc;--social-brand:#6857e8;--social-brand-dark:#5142cc;--social-soft:#f0edff;--social-green:#15966b;--social-shadow:0 12px 34px rgba(32,42,82,.055)}
+.social-feed-page,.social-directory-page,.messages-page,.social-person-profile{color:var(--social-ink)}
+.social-page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:4px 0 24px}.social-page-head h1{margin:7px 0 5px;font-size:clamp(25px,3vw,34px);font-weight:780;letter-spacing:-1.05px}.social-page-head p{margin:0;color:var(--social-muted);font-size:13px;line-height:1.65;max-width:660px}.social-eyebrow{font-size:10px;font-weight:850;letter-spacing:1.45px;color:#8275df}.social-page-head-action{flex:0 0 auto}.social-primary-button,.social-quiet-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:9px 14px;border:1px solid transparent;border-radius:11px;text-decoration:none;font-size:12px;font-weight:760;cursor:pointer;transition:transform .15s,background .15s,border-color .15s}.social-primary-button{color:#fff;background:linear-gradient(135deg,#7866f1,#5744d1);box-shadow:0 7px 17px #6653df22}.social-primary-button:hover{background:linear-gradient(135deg,#6f5ce9,#4f3fc4);transform:translateY(-1px)}.social-quiet-button{color:#5145c8;background:#fff;border-color:#e4e2fa}.social-quiet-button:hover{background:#f6f4ff;border-color:#cfc9fa}.social-primary-button:disabled,.social-quiet-button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.social-alert,.social-notice{margin:0 0 14px;padding:11px 14px;border:1px solid #f2c8c9;border-radius:12px;background:#fff5f5;color:#9a353c;font-size:12px;line-height:1.55}.social-notice{border-color:#c9eddf;background:#f0fbf6;color:#16734f}.social-feed-grid{display:grid;grid-template-columns:minmax(0,1fr) 265px;gap:20px;align-items:start}.social-feed-main{min-width:0;display:flex;flex-direction:column;gap:15px}.social-composer,.social-post-card,.social-surface-card,.social-side-card,.social-public-profile{border:1px solid var(--social-line);border-radius:17px;background:var(--social-surface);box-shadow:var(--social-shadow)}.social-composer{padding:18px}.social-compose-top{display:flex;align-items:flex-start;gap:12px}.social-compose-top textarea{flex:1;min-width:0;resize:vertical;min-height:70px;border:0;outline:0;color:var(--social-ink);background:transparent;font:500 14px/1.7 inherit}.social-compose-top textarea::placeholder{color:#9199ad}.social-avatar{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;object-fit:cover;border-radius:50%;background:#eeeaff;color:#5a4acb;border:1px solid #e5e2ff;font-weight:800;text-decoration:none}.social-avatar-sm{width:30px;height:30px;font-size:11px}.social-avatar-md{width:42px;height:42px;font-size:14px}.social-avatar-lg{width:60px;height:60px;font-size:20px}.social-avatar-xl{width:88px;height:88px;font-size:27px}.social-avatar-fallback{background:linear-gradient(145deg,#e7e5ff,#d9f3f5);color:#5044ba}.social-image-preview-wrap{margin:13px 0 4px;padding:10px;border:1px solid var(--social-line);border-radius:12px;background:#fafaff}.social-image-preview{width:100%;max-height:250px;object-fit:contain;border-radius:8px;display:block}.social-image-preview-wrap span{display:block;margin-top:5px;color:var(--social-muted);font-size:10px}.social-compose-fields{display:grid;grid-template-columns:1.3fr .7fr 1fr;gap:10px;margin-top:10px}.social-field{display:flex;flex-direction:column;gap:6px;min-width:0}.social-field>span{font-size:10px;letter-spacing:.35px;font-weight:800;color:#7b839b}.social-field input,.social-field select,.social-field textarea,.social-search input,.social-feed-toolbar select,.social-chat-compose input{width:100%;min-width:0;border:1px solid #e7e9f3;border-radius:9px;padding:10px 11px;background:#fcfcff;color:var(--social-ink);font:500 12px inherit;outline:none}.social-field input:focus,.social-field select:focus,.social-field textarea:focus,.social-search input:focus,.social-chat-compose input:focus{border-color:#a69af8;box-shadow:0 0 0 3px #8c7ff51c}.social-compose-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;padding-top:13px;border-top:1px solid #f0f1f7}.social-helper-text,.social-muted-copy,.social-side-footnote{font-size:11px;color:var(--social-muted);line-height:1.65}.social-validation{margin:8px 0 0;color:#b03b44;font-size:11px}.social-feed-toolbar{display:flex;gap:10px}.social-search{display:flex;align-items:center;gap:8px;min-width:0;flex:1;border:1px solid var(--social-line);border-radius:12px;background:#fff;padding:0 11px;color:#8679df}.social-search input{border:0;background:transparent;outline:0;box-shadow:none!important;padding:11px 0}.social-feed-toolbar select{width:140px;background:#fff}.social-post-card{padding:17px 18px;scroll-margin-top:16px}.social-post-heading{display:flex;align-items:center;gap:10px;min-width:0}.social-post-author{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.social-post-author strong{font-size:12px;font-weight:800}.social-post-author small{font-size:10px;color:var(--social-muted)}.social-pin-badge,.social-status-pill,.social-category-pill,.social-count-pill{display:inline-flex;align-items:center;justify-content:center;padding:5px 8px;border-radius:100px;background:#f0edff;color:#6252d8;font-size:10px;font-weight:780;white-space:nowrap}.social-post-menu{display:flex;flex-wrap:wrap;gap:4px}.social-post-menu button,.social-post-actions button,.social-post-actions a{border:0;background:transparent;color:#69738b;font-size:11px;font-weight:680;text-decoration:none;padding:7px 8px;border-radius:8px;cursor:pointer}.social-post-menu button:hover,.social-post-actions button:hover,.social-post-actions a:hover{background:#f5f4ff;color:#5849cd}.social-post-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.8;color:#37405b;margin:14px 0 11px}.social-post-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.social-post-tags span{font-size:10px;color:#7164d6;font-weight:700}.social-post-image-frame{display:flex;justify-content:center;align-items:center;overflow:hidden;max-height:520px;border-radius:12px;background:#f4f5fb;border:1px solid #f0f1f6}.social-post-image-frame img{display:block;width:100%;max-height:520px;object-fit:contain}.social-post-stats{display:flex;align-items:center;gap:13px;border-bottom:1px solid #f0f1f6;padding:11px 1px 10px;color:#8b93a7;font-size:10px}.social-post-stats .social-category-pill{margin-left:auto}.social-post-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:3px;padding-top:7px}.social-post-actions button.active{color:#6554dc;background:#f2efff}.social-feed-aside{position:sticky;top:20px;display:flex;flex-direction:column;gap:13px}.social-side-card{padding:17px}.social-side-card h2,.social-side-card h3{margin:9px 0;font-size:15px;letter-spacing:-.3px}.social-side-card p{font-size:11px;line-height:1.7;color:var(--social-muted);margin:7px 0 11px}.social-side-link{display:block;padding:9px 0;color:#6253d8;font-size:11px;font-weight:750;text-decoration:none;border-top:1px solid #f0f1f7}.social-side-link:first-of-type{border-top:0}.social-side-footnote{padding:0 5px}.social-empty{padding:44px 20px;border:1px dashed #dedff0;border-radius:16px;text-align:center;background:#fff}.social-empty>span{font-size:30px;color:#796be7}.social-empty h2{margin:10px 0 6px;font-size:17px}.social-empty p{max-width:390px;margin:0 auto 14px;color:var(--social-muted);font-size:12px;line-height:1.7}
+.social-directory-search{margin:0 0 18px;padding-left:13px}.social-surface-card{padding:19px;margin-bottom:16px}.social-surface-card h2{font-size:15px;margin:0 0 14px;letter-spacing:-.2px}.social-surface-card h2 .social-count-pill{margin-left:6px}.social-member-grid,.social-community-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.social-person-card{display:flex;align-items:center;flex-direction:column;gap:7px;text-align:center;padding:20px 15px;border:1px solid var(--social-line);border-radius:15px;background:#fff;min-width:0}.social-person-link{display:flex;align-items:center;flex-direction:column;gap:7px;text-decoration:none;color:inherit;min-width:0;width:100%}.social-person-link strong,.social-person-card>strong{font-size:12px;overflow-wrap:anywhere}.social-person-card small,.social-person-link small{font-size:10px;color:var(--social-muted)}.social-person-card p{margin:1px 0 8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--social-muted);font-size:11px;line-height:1.6}.social-inline-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.social-person-card>.social-inline-actions{margin-top:auto}.social-person-card .social-primary-button,.social-person-card .social-quiet-button{min-height:34px;font-size:10px;padding:8px 12px}.social-request-list,.social-friends-list{display:flex;flex-direction:column}.social-request-row{display:flex;align-items:center;gap:11px;padding:13px 0;border-top:1px solid #f0f1f7}.social-request-row:first-child{border-top:0}.social-request-row>div:nth-child(2){flex:1;display:flex;flex-direction:column;gap:4px}.social-request-row strong{font-size:12px}.social-request-row small{font-size:10px;color:var(--social-muted)}.social-member-row{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex:1;min-width:0}.social-member-copy{display:flex;flex-direction:column;gap:4px;min-width:0}.social-member-copy strong{font-size:12px}.social-member-copy small{font-size:10px;color:var(--social-muted)}.social-community-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.social-community-card{overflow:hidden;border:1px solid var(--social-line);background:#fff;border-radius:16px;box-shadow:var(--social-shadow)}.social-community-cover{height:80px;display:grid;place-items:center;background:linear-gradient(130deg,#e6e4ff,#e3f8f4);color:#6757da;font-size:30px}.social-community-card-body{padding:16px}.social-community-card h2{font-size:15px;margin:9px 0 5px}.social-community-card p{min-height:35px;color:var(--social-muted);font-size:11px;line-height:1.65}.social-create-group-form{display:grid;grid-template-columns:1fr 1.5fr auto;align-items:end;gap:10px}.social-create-group-form textarea{width:100%;padding:10px;border:1px solid #e7e9f3;border-radius:10px;resize:vertical;background:#fcfcff;color:var(--social-ink)}.social-community-card .social-inline-actions{margin-top:13px}.social-announcement{margin-bottom:16px;padding:16px;border:1px solid #e6e0ff;border-radius:14px;background:#f8f6ff}.social-announcement strong{font-size:12px;color:#5d4ed1}.social-announcement p{margin:7px 0 0;color:#49516b;font-size:12px;line-height:1.7}.social-group-post-list{display:flex;flex-direction:column;gap:14px}.social-post-comment{display:flex;gap:10px;padding:13px 0;border-top:1px solid #f0f1f7}.social-post-comment>div{min-width:0}.social-post-comment strong{font-size:11px}.social-post-comment p{margin:5px 0;color:#404760;font-size:12px;line-height:1.7}.social-post-comment small{color:var(--social-muted);font-size:10px}.social-post-comment > div > small + .social-comment-text-action{display:inline-block;margin-left:9px;vertical-align:baseline}.social-post-comment > div > small{margin-right:2px}
+.social-messages-shell{display:grid;grid-template-columns:260px minmax(0,1fr);height:min(690px,72vh);min-height:480px;overflow:hidden;border:1px solid var(--social-line);border-radius:17px;background:#fff;box-shadow:var(--social-shadow)}.social-conversation-list{display:flex;flex-direction:column;gap:7px;min-width:0;padding:12px;border-right:1px solid var(--social-line);overflow-y:auto}.social-conversation-item{display:flex;align-items:center;gap:10px;width:100%;min-width:0;padding:10px;border:0;border-radius:11px;background:transparent;text-align:left;cursor:pointer}.social-conversation-item.selected,.social-conversation-item:hover{background:#f3f1ff}.social-conversation-item>span:nth-child(2){flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}.social-conversation-item strong{font-size:11px}.social-conversation-item small{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:10px;color:var(--social-muted)}.social-unread-dot{width:8px;height:8px;border-radius:50%;background:#7867ee}.social-chat-panel{display:flex;flex-direction:column;min-width:0;min-height:0}.social-chat-header{display:flex;align-items:center;gap:10px;padding:13px 17px;border-bottom:1px solid var(--social-line)}.social-chat-header>span{display:flex;flex-direction:column;gap:4px;flex:1}.social-chat-header strong{font-size:12px}.social-chat-header small{font-size:10px;color:var(--social-muted)}.social-chat-messages{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:17px;background:linear-gradient(#fff,#fbfbff)}.social-chat-message{max-width:min(78%,460px);padding:11px 13px;border-radius:14px;background:#f0f1f8;align-self:flex-start;overflow-wrap:anywhere}.social-chat-message.mine{align-self:flex-end;background:#eeeaff;border:1px solid #e1dcff}.social-chat-message p{white-space:pre-wrap;font-size:12px;line-height:1.7;margin:0}.social-chat-message img{max-width:100%;max-height:220px;object-fit:contain;margin-top:8px;border-radius:9px}.social-chat-message small{display:block;margin-top:7px;text-align:right;color:#8790a5;font-size:9px}.social-chat-compose{display:flex;align-items:center;gap:8px;padding:12px;border-top:1px solid var(--social-line);flex-wrap:wrap}.social-chat-compose input:first-child{flex:1 1 38%;}.social-chat-compose input:nth-child(2){flex:1 1 30%;}.social-chat-compose>img{width:34px;height:34px;object-fit:cover;border-radius:6px}.social-chat-empty{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px}.social-chat-empty>span{font-size:30px;color:#7464e5}.social-chat-empty h2{font-size:17px;margin:9px 0 5px}.social-chat-empty p{font-size:11px;color:var(--social-muted)}.social-public-profile{overflow:hidden;margin-bottom:18px}.social-profile-cover{height:180px;background:linear-gradient(120deg,#e1dfff,#d7f5f0 65%,#f9e8df);background-position:center;background-size:cover}.social-public-profile-body{display:flex;align-items:center;gap:16px;padding:0 22px 22px;flex-wrap:wrap}.social-public-profile-body>.social-avatar{margin-top:-35px;border:5px solid #fff}.social-public-profile-meta{flex:1;min-width:200px;padding-top:17px}.social-public-profile-meta h1{margin:0 0 4px;font-size:22px}.social-public-profile-meta p{margin:3px 0;color:var(--social-muted);font-size:12px;line-height:1.6}.social-person-profile .social-inline-actions{padding-top:12px}.social-person-profile .social-surface-card p{font-size:12px;line-height:1.7}.social-person-profile .social-primary-button{margin-top:12px}
+@media(max-width:1120px){.social-feed-grid{grid-template-columns:minmax(0,1fr) 230px;gap:13px}.social-compose-fields{grid-template-columns:1fr 1fr}.social-compose-fields .social-field:first-child{grid-column:1/-1}.social-member-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:850px){.social-feed-grid{grid-template-columns:1fr}.social-feed-aside{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.social-side-footnote{grid-column:1/-1}.social-messages-shell{grid-template-columns:210px minmax(0,1fr);height:70vh}}
+@media(max-width:600px){.social-page-head{align-items:flex-start;flex-direction:column;margin-bottom:17px}.social-page-head-action{width:100%}.social-page-head-action .social-quiet-button{width:100%}.social-compose-fields{grid-template-columns:1fr}.social-compose-fields .social-field:first-child{grid-column:auto}.social-composer,.social-post-card,.social-surface-card{padding:14px;border-radius:14px}.social-compose-top textarea{min-height:68px}.social-compose-bottom{align-items:flex-start;flex-direction:column}.social-compose-bottom .social-primary-button{width:100%}.social-feed-toolbar{flex-direction:column}.social-feed-toolbar select{width:100%;min-height:40px}.social-feed-aside{grid-template-columns:1fr}.social-post-menu{width:100%;margin-top:7px}.social-post-menu button{padding:5px 6px}.social-post-actions{justify-content:flex-start}.social-post-stats{gap:8px;flex-wrap:wrap}.social-member-grid,.social-community-grid{grid-template-columns:1fr}.social-create-group-form{grid-template-columns:1fr}.social-request-row{flex-wrap:wrap}.social-request-row .social-member-row{flex-basis:100%}.social-request-row>.social-inline-actions{margin-left:auto}.social-messages-shell{display:flex;flex-direction:column;height:auto;min-height:560px}.social-conversation-list{max-height:210px;border-right:0;border-bottom:1px solid var(--social-line)}.social-chat-panel{min-height:390px}.social-chat-header .social-inline-actions{gap:4px}.social-chat-compose{align-items:stretch}.social-chat-compose input:first-child,.social-chat-compose input:nth-child(2){flex-basis:100%}.social-chat-compose .social-primary-button{width:100%}.social-public-profile-body{padding:0 15px 16px;gap:11px}.social-profile-cover{height:140px}.social-public-profile-body>.social-avatar{width:72px;height:72px}.social-public-profile-meta{flex-basis:calc(100% - 95px)}.social-public-profile-body>.social-inline-actions{width:100%}.social-public-profile-body>.social-inline-actions button{flex:1}}
+.social-group-chat-form{display:grid;grid-template-columns:1fr;gap:12px}.social-group-friend-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;max-height:210px;overflow:auto}.social-group-friend-picker label{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--social-line);border-radius:10px;background:#fff;cursor:pointer}.social-group-friend-picker input{accent-color:var(--social-brand)}.social-group-friend-picker span{font-size:11px;overflow-wrap:anywhere}.social-profile-counts{display:flex;gap:18px;margin-top:12px}.social-profile-counts a,.social-profile-counts>span{display:flex;flex-direction:column;gap:3px;text-decoration:none;color:inherit}.social-profile-counts strong{font-size:14px}.social-profile-counts span{font-size:9px;color:var(--social-muted)}.social-profile-posts .social-surface-card{display:flex;flex-direction:column;gap:13px}.social-profile-posts .social-surface-card>h2{margin:0}.social-profile-posts .social-post-card{box-shadow:none}.social-profile-posts .social-post-card .social-post-actions{justify-content:flex-start}@media(max-width:700px){.social-group-friend-picker{grid-template-columns:repeat(2,minmax(0,1fr))}.social-profile-counts{gap:13px}.social-public-profile-meta{min-width:0}}
+
+/* Premium light-theme support for opt-in group chat and community moderation. */
+.social-group-invites{margin:0 0 16px}.social-group-invite-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-top:1px solid var(--social-line)}.social-group-invite-row>span{display:flex;flex-direction:column;gap:4px}.social-group-invite-row strong{font-size:12px}.social-group-invite-row small{font-size:11px;color:var(--social-muted)}.social-moderator-manager{margin-top:18px;padding-top:16px;border-top:1px solid var(--social-line);display:grid;gap:10px}.social-moderator-manager h3{margin:0;font-size:13px}.social-moderator-manager select{width:100%;border:1px solid #e7e9f3;border-radius:9px;padding:10px;background:#fcfcff;color:var(--social-ink)}.social-chat-compose>img{max-width:72px;max-height:72px;object-fit:contain;border-radius:8px}@media(max-width:640px){.social-group-invite-row{align-items:flex-start;flex-direction:column}.social-group-invite-row .social-inline-actions{width:100%}.social-group-invite-row button{flex:1}}
+
+/* Relationship-aware public profile sections */
+.social-profile-tabs{display:flex;gap:8px;align-items:center;margin:0 0 16px;padding:5px;border:1px solid var(--social-line);border-radius:13px;background:#fff;width:fit-content;max-width:100%}
+.social-profile-tabs button{border:0;border-radius:9px;background:transparent;color:var(--social-muted);padding:10px 20px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.social-profile-tabs button.active{background:#eeeaff;color:#5c4ad1;box-shadow:inset 0 0 0 1px #e1dcff}
+.social-profile-about{padding:20px;display:flex;flex-direction:column;gap:0}
+.social-profile-about h2{margin:0 0 12px;font-size:17px}
+.social-about-row{display:grid;grid-template-columns:minmax(125px,.35fr) minmax(0,1fr);gap:14px;padding:13px 0;border-top:1px solid var(--social-line);font-size:12px;line-height:1.6}
+.social-about-row span{color:var(--social-muted)}.social-about-row strong{font-weight:600;overflow-wrap:anywhere;white-space:pre-wrap}
+.social-profile-actions{justify-content:flex-end;max-width:100%}
+.social-profile-author-link{color:inherit;text-decoration:none}.social-profile-author-link:hover{text-decoration:underline;color:var(--social-brand)}
+.social-status-pill{white-space:nowrap}
+@media(max-width:700px){.social-profile-tabs{width:100%}.social-profile-tabs button{flex:1}.social-about-row{grid-template-columns:1fr;gap:3px}.social-profile-actions{justify-content:flex-start}.social-profile-actions>*{max-width:100%}}
+
+/* Dark-mode contrast for group invitation picker and chat controls. */
+.lumora-workspace[data-theme="dark"] .social-group-friend-picker label,
+.lumora-workspace[data-theme="dark"] .social-group-friend-picker label:has(input:checked) {
+  background: #20243a !important;
+  border-color: #3a405b !important;
+  color: #f4f6ff !important;
+}
+.lumora-workspace[data-theme="dark"] .social-group-friend-picker label span,
+.lumora-workspace[data-theme="dark"] .social-group-friend-picker label strong {
+  color: #f4f6ff !important;
+}
+.lumora-workspace[data-theme="dark"] .social-group-friend-picker input { flex: 0 0 auto; }
+.lumora-workspace[data-theme="dark"] .social-chat-header .social-quiet-button,
+.lumora-workspace[data-theme="dark"] .social-chat-compose .social-primary-button { color: #fff; }
+/* Prevent chat header avatars from stretching into a wide oval. */
+.social-chat-header > .social-avatar {
+  display: inline-flex !important;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  flex: 0 0 42px !important;
+  aspect-ratio: 1 / 1 !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  overflow: hidden;
+}
+.social-chat-header > .social-avatar img,
+.social-chat-header > img.social-avatar {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+.social-delete-conversation { border-color: #f0c5cb !important; color: #c13d51 !important; }
+.lumora-workspace[data-theme="dark"] .social-delete-conversation { background: #33202b !important; border-color: #633444 !important; color: #ffb6c0 !important; }
+
+/* Explicit readable text color for friend selection cards in both themes. */
+.social-group-friend-picker label { color: var(--social-ink); }
+.social-group-friend-picker label span { color: var(--social-ink); }
+.lumora-workspace[data-theme="dark"] .social-group-friend-picker label,
+.lumora-workspace[data-theme="dark"] .social-group-friend-picker label span { color: #f4f6ff !important; }
+
+
+/* v2.3.5: fix low-contrast/blank chat header controls in dark mode. */
+.lumora-workspace[data-theme="dark"] .social-chat-header .social-quiet-button {
+  color: #f3f5ff !important;
+  background: #252a42 !important;
+  border-color: #424965 !important;
+  box-shadow: none !important;
+}
+.lumora-workspace[data-theme="dark"] .social-chat-header .social-quiet-button:hover {
+  background: #303650 !important;
+  border-color: #7467ee !important;
+}
+.lumora-workspace[data-theme="dark"] .social-chat-header .social-delete-conversation {
+  color: #ffbdc6 !important;
+  background: #38222e !important;
+  border-color: #754052 !important;
+}
+.social-mention-field { position: relative; min-width: 0; flex: 1 1 auto; }
+.social-mention-field > textarea {
+  display: block; box-sizing: border-box; width: 100%; min-width: 0; resize: vertical;
+  padding: 10px 12px; border: 1px solid var(--social-line); border-radius: 10px;
+  background: var(--social-surface); color: var(--social-ink); font: inherit; line-height: 1.55;
+  outline: none;
+}
+.social-mention-field > textarea:focus { border-color: #9b8ff4; box-shadow: 0 0 0 3px #8c7ff51c; }
+.social-mention-suggestions { position: absolute; z-index: 50; left: 0; bottom: calc(100% + 7px); width: min(320px, 100%); max-height: 240px; overflow-y: auto; padding: 5px; border: 1px solid var(--social-line); border-radius: 12px; background: var(--social-surface); box-shadow: 0 12px 36px #080b1c30; }
+.social-mention-suggestions button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: var(--social-ink); text-align: left; cursor: pointer; }
+.social-mention-suggestions button:hover { background: var(--social-soft); }
+.social-mention-suggestions button > span:last-child { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.social-mention-suggestions strong { font-size: 11px; }
+.social-mention-suggestions small { font-size: 10px; color: var(--social-muted); }
+.social-mention { color: #7664ef; font-weight: 750; }
+.social-compose-top > .social-mention-field { min-width: 0; }
+.social-compose-top > .social-mention-field textarea { min-height: 70px; border: 0; background: transparent; }
+.social-create-group-form .social-mention-field { width: 100%; }
+.social-chat-compose > .social-mention-field { flex: 1 1 38%; min-width: 180px; }
+.social-chat-compose > .social-mention-field textarea { min-height: 40px; max-height: 110px; resize: vertical; }
+.lumora-workspace[data-theme="dark"] .social-mention-field > textarea { background: var(--surface-soft, #20243a); border-color: var(--line, #3a405b); color: var(--text, #f4f6ff); }
+.lumora-workspace[data-theme="dark"] .social-mention-field > textarea::placeholder { color: #9ba4bd; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions { background: #1a1e32; border-color: #3a405b; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions button { color: #f4f6ff; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions button:hover { background: #292e49; }
+.lumora-workspace[data-theme="dark"] .social-mention { color: #b5aaff; }
+@media (max-width: 600px) { .social-chat-compose > .social-mention-field { flex-basis: 100%; min-width: 0; } }
+
+/* v2.3.6 — unified Facebook-style reaction picker and post engagement layout */
+.social-post-actions { align-items: center; }
+.social-reaction-control { position: relative; display: inline-flex; align-items: center; }
+.social-reaction-trigger { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; padding: 7px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--social-muted); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.social-reaction-trigger:hover, .social-reaction-trigger.active { background: var(--social-soft); color: var(--social-brand); }
+.social-reaction-trigger-emoji { font-size: 17px; line-height: 1; }
+.social-reaction-picker { position: absolute; z-index: 40; left: 0; bottom: calc(100% + 9px); display: flex; align-items: center; gap: 5px; padding: 7px 9px; border: 1px solid var(--social-line); border-radius: 999px; background: var(--social-surface); box-shadow: 0 10px 32px #080b1c26; animation: social-reaction-pop 160ms ease-out both; }
+.social-reaction-picker button { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; font-size: 24px; cursor: pointer; transition: transform 140ms ease, background 140ms ease; }
+.social-reaction-picker button:hover, .social-reaction-picker button:focus-visible { transform: translateY(-5px) scale(1.12); background: var(--social-soft); outline: none; }
+@keyframes social-reaction-pop { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.social-post-stats { flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.social-post-stats a { color: var(--social-muted); text-decoration: none; font-size: 11px; }
+.social-post-stats a:hover { color: var(--social-brand); text-decoration: underline; }
+.social-engagement-ratio { display: flex; flex: 1 1 100%; align-items: center; gap: 6px; min-height: 4px; margin-top: 1px; }
+.social-engagement-ratio span { display: block; height: 4px; min-width: 3px; border-radius: 99px; }
+.social-engagement-ratio .reaction-part { background: #7461f6; }
+.social-engagement-ratio .comment-part { background: #35b6a0; }
+.social-comment-owner-actions { display: inline-flex; gap: 8px; margin-left: 8px; }
+.social-comment-owner-actions button { border: 0; background: transparent; color: var(--social-muted); font: inherit; font-size: 11px; cursor: pointer; }
+.social-comment-owner-actions button:hover { color: var(--social-brand); text-decoration: underline; }
+.social-group-post-list .social-post-card { min-width: 0; }
+.social-group-post-list .social-post-actions { justify-content: flex-start; border-top: 1px solid var(--social-line); padding-top: 8px; }
+@media (prefers-reduced-motion: reduce) { .social-reaction-picker, .social-reaction-picker button { animation: none; transition: none; } }
+
+
+/* v2.3.9: give community publishing and comment forms a deliberate, readable layout. */
+.social-community-post-form { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 13px; width: 100%; }
+.social-community-post-form .social-field { width: 100%; min-width: 0; }
+.social-community-post-form .social-mention-field { width: 100%; min-width: 0; }
+.social-community-post-form .social-mention-field > textarea { display: block; width: 100%; min-height: 112px; box-sizing: border-box; padding: 13px 14px; line-height: 1.6; resize: vertical; background: #fcfcff; border: 1px solid #e3e7f3; border-radius: 11px; color: var(--social-ink); }
+.social-community-post-form .social-field input { min-height: 44px; box-sizing: border-box; }
+.social-community-post-form > .social-primary-button { justify-self: end; min-width: 165px; }
+.social-comment-form { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; gap: 10px; width: 100%; margin-bottom: 8px; }
+.social-comment-form > textarea { display: block; box-sizing: border-box; width: 100%; min-width: 0; min-height: 92px; padding: 13px 14px; border: 1px solid #e3e7f3; border-radius: 11px; resize: vertical; background: #fcfcff; color: var(--social-ink); font: inherit; line-height: 1.6; }
+.social-comment-form > textarea:focus, .social-community-post-form .social-mention-field > textarea:focus { outline: none; border-color: #a69af8; box-shadow: 0 0 0 3px #8c7ff51c; }
+.social-comment-form > .social-primary-button { justify-self: end; min-width: 145px; }
+.social-comment-form > textarea::placeholder, .social-community-post-form textarea::placeholder { color: #8992aa; opacity: 1; }
+.lumora-workspace[data-theme="dark"] .social-comment-form > textarea, .lumora-workspace[data-theme="dark"] .social-community-post-form .social-mention-field > textarea { background: var(--surface-soft, #20243a); border-color: var(--line, #3a405b); color: var(--text, #f4f6ff); }
+.lumora-workspace[data-theme="dark"] .social-comment-form > textarea::placeholder, .lumora-workspace[data-theme="dark"] .social-community-post-form textarea::placeholder { color: #a4acc2; }
+@media (max-width: 600px) { .social-community-post-form > .social-primary-button, .social-comment-form > .social-primary-button { width: 100%; min-width: 0; justify-self: stretch; } .social-community-post-form .social-mention-field > textarea { min-height: 105px; } }
+
+/* Phase 4–5: relationship controls, readable mentions and consistent comment actions */
+.social-person-profile-link { display: flex; flex-direction: column; align-items: center; color: inherit; text-decoration: none; }
+.social-person-link { display: flex; flex-direction: column; align-items: center; }
+.social-person-link .social-inline-actions { margin-top: 8px; }
+.social-danger-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 35px; padding: 8px 12px; border: 1px solid #f0c8d0; border-radius: 10px; background: #fff1f3; color: #b4233b; font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
+.social-danger-button:hover:not(:disabled) { background: #ffe3e8; border-color: #e7a7b4; }
+.social-danger-button:disabled { opacity: .55; cursor: not-allowed; }
+.social-comment-reply-button { display: inline-flex; align-items: center; min-height: 27px; margin: 5px 5px 0 0; padding: 4px 10px; border: 1px solid var(--social-line); border-radius: 8px; background: var(--social-soft); color: var(--social-muted); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.social-comment-reply-button:hover { border-color: #c8c0ff; background: var(--social-surface); color: var(--social-brand); }
+.social-comment-owner-actions { gap: 5px; }
+.social-comment-owner-actions button { display: inline-flex; align-items: center; min-height: 27px; padding: 4px 10px; border: 1px solid var(--social-line); border-radius: 8px; background: var(--social-surface); color: var(--social-muted); font-weight: 700; }
+.social-comment-owner-actions button:hover { background: var(--social-soft); color: var(--social-brand); text-decoration: none; }
+.social-mention-suggestions { background: #fff !important; color: #17203a !important; border-color: #d9dced !important; }
+.social-mention-suggestions button { color: #17203a !important; }
+.social-mention-suggestions strong { color: #17203a !important; }
+.social-mention-suggestions small { color: #626b83 !important; }
+.social-mention-suggestions button:hover, .social-mention-suggestions button:focus-visible { background: #eeeaff !important; outline: 2px solid #9b8ff4; outline-offset: -2px; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions { background: #1a1e32 !important; color: #f4f6ff !important; border-color: #3a405b !important; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions button, .lumora-workspace[data-theme="dark"] .social-mention-suggestions strong { color: #f4f6ff !important; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions small { color: #c0c6dc !important; }
+.lumora-workspace[data-theme="dark"] .social-danger-button { background: #482631; border-color: #754052; color: #ffb5c2; }
+
+
+/* Phase 3–5: click-to-preview profile cards and consistent comment actions. */
+.social-profile-preview-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 20px; background: rgba(15, 20, 42, .48); backdrop-filter: blur(5px); }
+.social-profile-preview-modal { position: relative; width: min(100%, 430px); overflow: hidden; padding: 0; border: 1px solid var(--social-line); border-radius: 20px; background: var(--social-surface); color: var(--social-ink); box-shadow: 0 24px 70px rgba(8, 11, 28, .24); }
+.social-profile-preview-close { position: absolute; top: 12px; right: 12px; z-index: 2; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(18, 23, 47, .55); color: #fff; font-size: 23px; line-height: 1; cursor: pointer; }
+.social-profile-preview-cover { height: 124px; background: linear-gradient(135deg, #2f2a71, #7461f6 55%, #a6c9ff); background-position: center; background-size: cover; }
+.social-profile-preview-modal > .social-avatar-xl { display: block; width: 84px; height: 84px; margin: -42px auto 0; border: 4px solid var(--social-surface); border-radius: 25px; object-fit: cover; position: relative; }
+.social-profile-preview-content { padding: 12px 24px 22px; text-align: center; }
+.social-profile-preview-content h2 { margin: 0 0 4px; color: var(--social-ink); font-size: 21px; }
+.social-profile-preview-username { margin: 0 0 12px; color: var(--social-muted); font-size: 12px; }
+.social-profile-preview-content > p:not(.social-profile-preview-username) { margin: 10px 0 14px; color: var(--social-muted); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.social-profile-preview-actions { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.social-comment-action-button { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; margin: 5px 5px 0 0; padding: 4px 10px; border: 1px solid var(--social-line); border-radius: 8px; background: var(--social-surface); color: var(--social-muted); font: inherit; font-size: 11px; font-weight: 750; line-height: 1.2; cursor: pointer; transition: background .15s ease, border-color .15s ease, color .15s ease; }
+.social-comment-action-button:hover, .social-comment-action-button:focus-visible { border-color: #c8c0ff; background: var(--social-soft); color: var(--social-brand); outline: none; }
+.social-comment-owner-actions { display: inline-flex; flex-wrap: wrap; gap: 0; margin-left: 0; vertical-align: middle; }
+.social-mention-suggestions { color-scheme: light; background: #fff !important; color: #17203a !important; border-color: #d9dced !important; }
+.social-mention-suggestions button, .social-mention-suggestions button > span, .social-mention-suggestions strong { color: #17203a !important; }
+.social-mention-suggestions small { color: #59647e !important; }
+.social-mention-suggestions button:hover, .social-mention-suggestions button:focus-visible, .social-mention-suggestions button[aria-selected="true"] { background: #eeeaff !important; color: #251c62 !important; outline: 2px solid #9b8ff4; outline-offset: -2px; }
+.social-mention-suggestions button:hover strong, .social-mention-suggestions button:focus-visible strong { color: #251c62 !important; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions { color-scheme: dark; background: #1a1e32 !important; color: #f4f6ff !important; border-color: #3a405b !important; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions button, .lumora-workspace[data-theme="dark"] .social-mention-suggestions button > span, .lumora-workspace[data-theme="dark"] .social-mention-suggestions strong { color: #f4f6ff !important; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions small { color: #c0c6dc !important; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions button:hover, .lumora-workspace[data-theme="dark"] .social-mention-suggestions button:focus-visible, .lumora-workspace[data-theme="dark"] .social-mention-suggestions button[aria-selected="true"] { background: #39315f !important; color: #fff !important; }
+.lumora-workspace[data-theme="dark"] .social-mention-suggestions button:hover strong, .lumora-workspace[data-theme="dark"] .social-mention-suggestions button:focus-visible strong { color: #fff !important; }
+@media (max-width: 520px) { .social-profile-preview-backdrop { padding: 12px; } .social-profile-preview-modal { border-radius: 16px; } .social-profile-preview-content { padding: 12px 17px 18px; } }
+
+/* Phase 8: visible keyboard focus and safe wrapping for relationship actions. */
+.social-comment-reply-button:focus-visible,
+.social-comment-owner-actions button:focus-visible,
+.social-danger-button:focus-visible,
+.social-person-card .social-primary-button:focus-visible,
+.social-person-card .social-quiet-button:focus-visible,
+.social-request-row .social-primary-button:focus-visible,
+.social-request-row .social-quiet-button:focus-visible { outline: 2px solid #8c7cf7; outline-offset: 2px; }
+.social-person-card .social-inline-actions { justify-content: center; }
+.social-request-row .social-inline-actions { min-width: 0; }
+.social-request-row .social-inline-actions > * { max-width: 100%; }
+@media (max-width: 600px) {
+  .social-person-card { padding: 17px 12px; }
+  .social-person-card .social-inline-actions { width: 100%; justify-content: center; }
+  .social-person-card .social-inline-actions > button,
+  .social-person-card .social-inline-actions > a { max-width: 100%; }
+  .social-chat-header { align-items: flex-start; flex-wrap: wrap; }
+  .social-chat-header .social-inline-actions { width: 100%; }
+}
+.social-profile-preview-backdrop { overflow-y: auto; overscroll-behavior: contain; }
+.social-profile-preview-modal { max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain; }
+.social-profile-preview-modal button:focus-visible { outline: 2px solid #8c7cf7; outline-offset: 3px; }
+@media (max-width: 600px) { .social-profile-preview-backdrop { padding: 12px; } .social-profile-preview-modal { max-height: calc(100vh - 24px); } }
+
+/* Phase 8: profile previews remain navigable on short/mobile viewports. */
+.social-profile-preview-backdrop { overflow-y: auto; overscroll-behavior: contain; }
+.social-profile-preview-modal { max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain; }
+.social-profile-preview-modal button:focus-visible { outline: 2px solid #8c7cf7; outline-offset: 3px; }
+@media (max-width: 600px) { .social-profile-preview-backdrop { padding: 12px; } .social-profile-preview-modal { max-height: calc(100vh - 24px); } }
+.social-profile-preview-modal > .social-avatar-xl { display: flex; align-items: center; justify-content: center; }
+.social-profile-preview-content > .social-profile-action-message { margin: 12px 0 0; padding: 9px 11px; border: 1px solid #bdebd8; border-radius: 9px; background: #effbf6; color: #16734f; font-size: 12px; font-weight: 750; }
+.lumora-workspace[data-theme="dark"] .social-profile-preview-content > .social-profile-action-message { border-color: #315b50; background: #1b342f; color: #a6efd2; }
+
+
+/* Comment actions intentionally match the original quiet Edit/Delete text actions. */
+.social-comment-text-action { display:inline; min-height:0; margin:5px 10px 0 0; padding:0; border:0; border-radius:0; background:transparent; color:var(--social-muted); font:inherit; font-size:11px; font-weight:650; line-height:1.5; text-decoration:none; cursor:pointer; }
+.social-comment-text-action:hover, .social-comment-text-action:focus-visible { background:transparent; color:var(--social-brand); text-decoration:underline; outline:none; }
+.social-comment-delete-text-action:hover, .social-comment-delete-text-action:focus-visible { color:#c43d53; }
+.social-comment-owner-actions { display:inline-flex; flex-wrap:wrap; align-items:center; gap:0; margin-left:0; vertical-align:baseline; }
+.social-comment-owner-actions .social-comment-text-action { margin-right:10px; }
+.social-replying-to { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin:0 0 12px; padding:10px 12px; border:1px solid var(--social-line); border-radius:11px; background:var(--social-soft); color:var(--social-muted); font-size:12px; line-height:1.5; }
+.social-replying-to strong { color:var(--social-ink); font-weight:750; }
+.social-comment-cancel-button { display:inline-flex; align-items:center; justify-content:center; min-height:31px; padding:6px 11px; border:1px solid var(--social-line); border-radius:9px; background:var(--social-surface); color:var(--social-muted); font:inherit; font-size:11px; font-weight:700; cursor:pointer; transition:background .15s ease,border-color .15s ease,color .15s ease; }
+.social-comment-cancel-button:hover, .social-comment-cancel-button:focus-visible { border-color:#c8c0ff; background:var(--social-surface); color:var(--social-brand); outline:none; }
+.lumora-workspace[data-theme="dark"] .social-replying-to { background:var(--social-soft); border-color:var(--social-line); }
+.social-comment-cancel-button:focus-visible { outline:2px solid #8c7cf7; outline-offset:2px; }
+
+/* Higher-specificity reset keeps Reply, Edit and Delete as matching quiet text actions. */
+.social-post-comment .social-comment-owner-actions .social-comment-text-action { display:inline; min-height:0; margin:5px 10px 0 0; padding:0; border:0; border-radius:0; background:transparent; color:var(--social-muted); font:inherit; font-size:11px; font-weight:650; line-height:1.5; box-shadow:none; }
+.social-post-comment .social-comment-owner-actions .social-comment-text-action:hover, .social-post-comment .social-comment-owner-actions .social-comment-text-action:focus-visible { border:0; background:transparent; color:var(--social-brand); text-decoration:underline; outline:none; }
+.social-post-comment .social-comment-owner-actions .social-comment-delete-text-action:hover { color:#c43d53; }
+
+/* Unread chat rows mirror familiar social inbox behavior. */
+.social-conversation-item.unread strong{font-weight:800!important;color:var(--social-ink)}
+.social-conversation-item.unread > span:nth-child(2) > small{font-weight:800!important;color:var(--social-ink)!important}
+.social-conversation-item.unread .social-unread-dot{width:9px;height:9px;flex:0 0 9px}
+
+
+/* Lumora Messages — premium purple scrollbar (Option 1) */
+.social-chat-messages {
+  scrollbar-width: thin;
+  scrollbar-color: #8b70f5 #efedfb;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.social-chat-messages::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.social-chat-messages::-webkit-scrollbar-track {
+  background: #efedfb;
+  border-radius: 999px;
+  margin-block: 7px;
+}
+
+.social-chat-messages::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #a18aff 0%, #7655e8 100%);
+  border: 2px solid #efedfb;
+  border-radius: 999px;
+  min-height: 36px;
+}
+
+.social-chat-messages::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #8f73ff 0%, #6440d8 100%);
+}
+
+.social-chat-messages::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Remove native arrow buttons from the chat scrollbar while keeping scrolling. */
+.social-chat-messages::-webkit-scrollbar-button,
+.social-chat-messages::-webkit-scrollbar-button:single-button,
+.social-chat-messages::-webkit-scrollbar-button:vertical,
+.social-chat-messages::-webkit-scrollbar-button:horizontal {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Hide the outer page scrollbar only; native page scrolling remains enabled. */
+html,
+body,
+#root {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Lumora Messages: clean, rounded reference-inspired chat UI. */
+.social-chat-panel { background: #fff; }
+.social-chat-header {
+  position: relative; z-index: 5; min-height: 76px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  background: #fff; border-bottom: 1px solid #e0e5f5;
+}
+.social-chat-header-identity { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.social-chat-header-identity strong { color: #141a2b; font-size: 15px; line-height: 1.25; font-weight: 750; }
+.social-chat-header-identity small { color: #68748d; font-size: 12px; line-height: 1.3; }
+.social-chat-header-identity small::first-letter { color: #28a85b; }
+.social-chat-menu-wrap { position: relative; flex: 0 0 auto; margin-left: auto; }
+.social-chat-menu-trigger { display: grid; place-items: center; width: 38px; height: 38px; padding: 0 0 8px; border: 0; border-radius: 50%; background: transparent; color: #6f7483; font-size: 20px; font-weight: 800; letter-spacing: 1px; cursor: pointer; }
+.social-chat-menu-trigger:hover, .social-chat-menu-trigger[aria-expanded="true"] { background: #f1edff; color: #6848e8; }
+.social-chat-menu-backdrop { position: fixed; inset: 0; z-index: 40; width: 100%; height: 100%; border: 0; padding: 0; background: transparent; cursor: default; }
+.social-chat-menu { position: absolute; z-index: 41; top: calc(100% + 8px); right: 0; width: 220px; padding: 7px; border: 1px solid #e1e5f4; border-radius: 15px; background: #fff; box-shadow: 0 16px 42px #1a23501f; }
+.social-chat-menu button { display: block; width: 100%; padding: 11px 12px; border: 0; border-radius: 9px; background: transparent; color: #27304a; text-align: left; font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
+.social-chat-menu button:hover { background: #f3f0ff; color: #6048d7; }
+.social-chat-menu button.danger { color: #c33f54; }
+.social-chat-messages { gap: 14px; padding: 22px 14px; background: #fff; scrollbar-width: thin; scrollbar-color: #8b6cff #f0ebff; }
+.social-chat-message { max-width: min(78%, 460px); padding: 13px 14px 11px; border: 0; border-radius: 10px; background: #f0f1f8; color: #172039; }
+.social-chat-message.mine { background: #f0ebff; border: 1px solid #ded5ff; }
+.social-chat-message p { font-size: 14px; line-height: 1.55; }
+.social-chat-message small { margin-top: 7px; font-size: 11px; color: #71809b; }
+.social-chat-compose { position: relative; display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; padding: 12px 14px; background: #fff; border-top: 1px solid #e0e5f5; }
+.social-chat-compose > .social-mention-field { flex: 1 1 auto; min-width: 0; }
+.social-chat-compose > .social-mention-field textarea { min-height: 42px; max-height: 100px; padding: 10px 13px; border: 1px solid #dfe4f3; border-radius: 999px; background: #fafaff; color: #1b2440; font-size: 14px; line-height: 1.4; resize: none; }
+.social-chat-compose > .social-mention-field textarea:focus { border-color: #a89af9; box-shadow: 0 0 0 3px #8b6cff18; }
+.social-attach-toggle { flex: 0 0 40px; display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #6542f2; border-radius: 13px; background: linear-gradient(145deg,#7957ff 0%,#6039ed 100%); color: #fff; cursor: pointer; box-shadow: 0 4px 11px #7048ff2b; transition: transform .18s ease, color .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.social-attach-icon { display: block; width: 19px; height: 19px; transition: transform .18s ease; }
+.social-attach-toggle:hover, .social-attach-toggle:focus-visible { transform: translateY(-2px); border-color: #a997ff; background: linear-gradient(145deg,#6843f5 0%,#512edb 100%); color: #fff; box-shadow: 0 7px 18px #7048ff45, 0 0 0 3px #8b6cff20; outline: none; }
+.social-attach-toggle:hover .social-attach-icon, .social-attach-toggle:focus-visible .social-attach-icon { transform: rotate(-8deg) scale(1.08); }
+.social-attach-toggle.active { border-color: #9d87ff; background: linear-gradient(145deg,#6843f5 0%,#512edb 100%); color: #fff; box-shadow: inset 0 1px 2px #ffffff24, 0 4px 12px #7048ff35; }
+.social-attach-toggle:active { transform: translateY(0) scale(.96); }
+.lumora-workspace[data-theme="dark"] .social-attach-toggle { background: linear-gradient(145deg,#29233f,#211d35); border-color: #484064; color: #b8a8ff; box-shadow: 0 3px 10px #0002; }
+.lumora-workspace[data-theme="dark"] .social-attach-toggle:hover, .lumora-workspace[data-theme="dark"] .social-attach-toggle.active { background: linear-gradient(145deg,#3b2f63,#30264f); border-color: #8d77ef; color: #e3dcff; box-shadow: 0 7px 17px #0003, 0 0 0 3px #8b6cff20; }
+.social-chat-compose > .social-image-url-input { flex: 0 1 220px; width: 220px; min-width: 120px; border-radius: 999px; padding: 11px 13px; font-size: 12px; }
+.social-chat-compose > .social-primary-button.social-send-button { flex: 0 0 42px; display: grid; place-items: center; width: 42px; min-width: 42px; height: 42px; padding: 0; border: 0; border-radius: 12px; background: #7048ff; color: #fff; font-size: 20px; line-height: 1; box-shadow: none; }
+.social-chat-compose > .social-primary-button.social-send-button:hover:not(:disabled) { background: #5f3ce8; }
+.social-chat-compose > .social-primary-button.social-send-button:disabled { opacity: .55; }
+.social-chat-compose > img { flex: 0 0 34px; }
+.social-chat-messages::-webkit-scrollbar { width: 7px; }
+.social-chat-messages::-webkit-scrollbar-track { margin: 8px 0; border-radius: 999px; background: #f0ebff; }
+.social-chat-messages::-webkit-scrollbar-thumb { min-height: 34px; border: 1px solid #f0ebff; border-radius: 999px; background: linear-gradient(180deg,#a38cff,#7855f4); }
+.social-chat-messages::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg,#8c70ff,#6742eb); }
+.social-chat-messages::-webkit-scrollbar-button, .social-chat-messages::-webkit-scrollbar-button:single-button, .social-chat-messages::-webkit-scrollbar-button:vertical, .social-chat-messages::-webkit-scrollbar-button:horizontal { display: none !important; width: 0 !important; height: 0 !important; }
+.lumora-workspace[data-theme="dark"] .social-chat-panel,
+.lumora-workspace[data-theme="dark"] .social-chat-header,
+.lumora-workspace[data-theme="dark"] .social-chat-compose { background: #171a2c; }
+.lumora-workspace[data-theme="dark"] .social-chat-header { border-color: #343951; }
+.lumora-workspace[data-theme="dark"] .social-chat-header-identity strong { color: #f4f5ff; }
+.lumora-workspace[data-theme="dark"] .social-chat-header-identity small { color: #aab2ca; }
+.lumora-workspace[data-theme="dark"] .social-chat-messages { background: #1b1e32; scrollbar-color: #8065ef #292d47; }
+.lumora-workspace[data-theme="dark"] .social-chat-message { background: #292d45; color: #f2f4ff; }
+.lumora-workspace[data-theme="dark"] .social-chat-message.mine { background: #352c57; border-color: #51417f; }
+.lumora-workspace[data-theme="dark"] .social-chat-compose > .social-mention-field textarea { background: #20243a; border-color: #3a405b; color: #f4f6ff; }
+.lumora-workspace[data-theme="dark"] .social-chat-menu { background: #20243a; border-color: #3a405b; }
+.lumora-workspace[data-theme="dark"] .social-chat-menu button { color: #f4f6ff; }
+.lumora-workspace[data-theme="dark"] .social-chat-menu button:hover { background: #2c3150; }
+.lumora-workspace[data-theme="dark"] .social-chat-menu button.danger { color: #ffb6c0; }
+@media (max-width: 600px) {
+  .social-chat-header { min-height: 70px; padding: 12px; }
+  .social-chat-header-identity strong { font-size: 14px; }
+  .social-chat-compose { flex-wrap: wrap; padding: 10px; }
+  .social-chat-compose > .social-mention-field { flex: 1 1 calc(100% - 98px); min-width: 0; }
+  .social-chat-compose > .social-image-url-input { flex: 1 1 100%; width: 100%; min-width: 0; }
+  .social-chat-compose > img { max-width: 42px; max-height: 42px; }
+}
+
+/* Clear online indicator in the direct-message header; status text is driven by the peer profile presence fields. */
+.social-chat-presence { display: inline-flex; align-items: center; gap: 6px; }
+.social-chat-presence.is-online::before { content: ""; display: inline-block; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #28b463; box-shadow: 0 0 0 3px #28b4631b; }

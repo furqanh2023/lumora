@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Lumora logo</title>
+  <defs>
+    <linearGradient id="lumora-gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#24c8f4"/>
+      <stop offset="0.48" stop-color="#6b63ff"/>
+      <stop offset="1" stop-color="#9b42ef"/>
+    </linearGradient>
+  </defs>
+  <path d="M18 26 Q18 15 29 15 H41 Q52 15 52 26 V75 L91 98 Q101 104 95 114 Q91 122 81 117 L30 88 Q18 81 18 67 Z" fill="url(#lumora-gradient)"/>
+  <path d="M62 13 L94 32 Q101 36 101 45 V79 Q101 91 89 84 L73 75 Q62 69 62 57 Z" fill="url(#lumora-gradient)" opacity=".96"/>
+  <path d="M39 42 V69 L76 90" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".92"/>
+</svg>

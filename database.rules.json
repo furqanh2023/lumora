@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "status": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        "state": {
+          ".validate": "newData.isString() && (newData.val() === 'online' || newData.val() === 'offline')"
+        },
+        "lastChanged": {
+          ".validate": "newData.isNumber()"
+        },
+        "connections": {
+          "$connectionId": {
+            ".validate": "newData.hasChildren(['state', 'lastChanged']) && newData.child('state').val() === 'online' && newData.child('lastChanged').isNumber()"
+          }
+        }
+      }
+    }
+  }
+}

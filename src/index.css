@@ -1,13 +1,59 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Lumora feedback system: branded toast notifications and accessible dialog prompts. */
+.lumora-feedback-dialog {
+  width: min(92vw, 440px);
+  max-width: 440px;
+  padding: 0;
+  border: 1px solid var(--border-color, #e1e7f5);
+  border-radius: 20px;
+  color: var(--text-primary, #172044);
+  background: var(--surface, #fff);
+  box-shadow: 0 24px 80px rgba(14, 22, 54, .28);
+  animation: lumora-dialog-in .22s ease-out both;
 }
+.lumora-feedback-dialog::backdrop { background: rgba(13, 18, 40, .48); backdrop-filter: blur(4px); }
+.lumora-feedback-dialog__form { padding: 26px; }
+.lumora-feedback-dialog__form h2 { margin: 0 0 10px; font-size: 1.2rem; line-height: 1.35; }
+.lumora-feedback-dialog__message { margin: 0 0 18px; color: var(--text-secondary, #697696); font-size: .94rem; line-height: 1.6; }
+.lumora-feedback-dialog__input { display: block; width: 100%; min-height: 44px; margin: 14px 0 20px; padding: 12px 14px; border: 1px solid var(--border-color, #dce3f2); border-radius: 12px; outline: none; color: inherit; background: var(--input-bg, #f8f9ff); font: inherit; box-sizing: border-box; }
+.lumora-feedback-dialog__input:focus { border-color: #7650ff; box-shadow: 0 0 0 3px rgba(118, 80, 255, .15); }
+.lumora-feedback-dialog__input:is(textarea) { min-height: 120px; resize: vertical; }
+.lumora-feedback-dialog__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+.lumora-feedback-dialog__actions button { min-height: 42px; padding: 10px 16px; border-radius: 11px; border: 1px solid transparent; font: inherit; font-weight: 700; cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, background .18s ease; }
+.lumora-feedback-dialog__actions button:hover { transform: translateY(-1px); }
+.lumora-feedback-dialog__cancel { color: var(--text-primary, #172044); background: var(--surface-muted, #f3f5fc); border-color: var(--border-color, #e1e7f5) !important; }
+.lumora-feedback-dialog__confirm { color: #fff; background: linear-gradient(110deg, #6547f5, #9148f6); box-shadow: 0 6px 16px rgba(101, 71, 245, .22); }
+.lumora-feedback-dialog__confirm.is-danger { background: #d93654; box-shadow: 0 6px 16px rgba(217, 54, 84, .18); }
+.lumora-feedback-dialog__confirm:hover { box-shadow: 0 9px 22px rgba(101, 71, 245, .28); }
+.lumora-toast { border-radius: 14px !important; font-family: inherit !important; box-shadow: 0 12px 34px rgba(18, 25, 55, .18) !important; }
+@keyframes lumora-dialog-in { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .lumora-feedback-dialog, .lumora-feedback-dialog__actions button { animation: none; transition: none; } }
+
+/* Subtle, consistent interaction polish inspired by modern product interfaces. */
+:where(button, .social-surface-card, .social-post-card, .community-content-card, .admin-panel, .admin-content-card, .community-detail-card, .community-comments-panel) { transition: box-shadow .22s ease, border-color .22s ease, transform .22s ease, background-color .22s ease; }
+:where(.social-surface-card, .social-post-card, .community-content-card, .admin-content-card):hover { border-color: rgba(118, 80, 255, .26); box-shadow: 0 10px 28px rgba(32, 44, 88, .07); }
+:where(button, a, input, textarea, select):focus-visible { outline: 3px solid rgba(118, 80, 255, .38); outline-offset: 2px; }
+:where(button:not(:disabled), .social-primary-button, .community-primary-button, .admin-primary-btn):active { transform: translateY(1px); }
+@media (prefers-reduced-motion: reduce) { :where(button, .social-surface-card, .social-post-card, .community-content-card, .admin-panel, .admin-content-card, .community-detail-card, .community-comments-panel) { transition: none; } }
+
+:root { --lumora-toast-bg: #fff; --lumora-toast-text: #172044; }
+:root[data-lumora-theme="dark"] { --lumora-toast-bg: #191c30; --lumora-toast-text: #f0f2ff; }
+.lumora-feedback-dialog[data-theme="dark"] { --text-primary: #f0f2ff; --text-secondary: #a4abc4; --surface: #191c30; --surface-muted: #20243b; --input-bg: #20243b; --border-color: #323752; color-scheme: dark; }
+.lumora-feedback-dialog[data-theme="light"] { color-scheme: light; }
+
+:where(.social-primary-button, .social-quiet-button, .community-primary-button, .community-outline-button, .admin-primary-btn, .admin-secondary-btn, .login-submit, .signup-submit):not(:disabled):hover { filter: brightness(1.035); box-shadow: 0 8px 20px rgba(88, 67, 210, .14); }
+:where(a, .workspace-nav-link, .admin-nav-link) { transition: color .18s ease, background-color .18s ease, border-color .18s ease; }
+
+
+/* Always-on-top toast layer: independent of React stacking contexts. */
+#lumora-toast-host { position: fixed !important; z-index: 2147483647 !important; top: max(16px, env(safe-area-inset-top)) !important; right: max(16px, env(safe-area-inset-right)) !important; width: min(420px, calc(100vw - 32px)) !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 10px !important; pointer-events: none !important; isolation: isolate; }
+.lumora-toast-item { display: flex; align-items: flex-start; gap: 11px; width: 100%; box-sizing: border-box; padding: 14px 13px; border: 1px solid #e2e7f2; border-left: 4px solid #6f52ed; border-radius: 15px; background: #fff; color: #18213d; box-shadow: 0 16px 44px rgba(18, 25, 55, .24); font: 500 14px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; opacity: 0; transform: translate3d(24px, -6px, 0) scale(.98); transition: opacity .18s ease, transform .18s ease; pointer-events: auto; overflow-wrap: anywhere; }
+.lumora-toast-item.is-visible { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+.lumora-toast-item.is-leaving { opacity: 0; transform: translate3d(18px, -4px, 0) scale(.98); }
+.lumora-toast-item.is-success { border-left-color: #159b68; } .lumora-toast-item.is-error { border-left-color: #d93654; } .lumora-toast-item.is-warning { border-left-color: #d28a13; } .lumora-toast-item.is-info { border-left-color: #6f52ed; }
+.lumora-toast-icon { flex: 0 0 25px; width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; background: #eee9ff; color: #6547df; font-size: 14px; font-weight: 900; }
+.is-success .lumora-toast-icon { background: #e1f7ed; color: #087a4b; } .is-error .lumora-toast-icon { background: #ffebef; color: #bd2342; } .is-warning .lumora-toast-icon { background: #fff3d9; color: #925900; }
+.lumora-toast-message { flex: 1; min-width: 0; padding-top: 2px; } .lumora-toast-close { flex: 0 0 26px; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #7b849b; cursor: pointer; font-size: 22px; line-height: 1; } .lumora-toast-close:hover { background: #f0f1f8; color: #18213d; }
+:root[data-lumora-theme="dark"] .lumora-toast-item { background: #191c30; color: #f0f2ff; border-color: #343953; } :root[data-lumora-theme="dark"] .lumora-toast-close { color: #b5bbd0; }
+@media (max-width: 520px) { #lumora-toast-host { top: max(10px, env(safe-area-inset-top)) !important; right: 10px !important; width: calc(100vw - 20px) !important; } .lumora-toast-item { padding: 12px; } }
+@media (prefers-reduced-motion: reduce) { .lumora-toast-item { transition: none; } }

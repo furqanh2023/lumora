@@ -1,0 +1,988 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Fixed administrator identity: exact Firebase Auth UID AND exact email.
+    // Email verification is intentionally not required for this pre-authorized UID.
+    // Never replace this with a client-writable users/{uid}.role field.
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.uid == 'BLILPJTQLwdfWmMILWqUzk4YHg12'
+        && request.auth.token.email == 'furqan@gmail.com';
+    }
+
+    function ownsUserDocument(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isActiveMember() {
+      // A member is blocked only when suspension is explicitly true. This safely
+      // supports older user documents that predate the suspended field (or have it null),
+      // without allowing a client to change its own suspension status.
+      return isSignedIn() && (
+        isAdmin() || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('suspended', false) != true
+        )
+      );
+    }
+
+    function wantsNotifications(userId, category) {
+      return !exists(/databases/$(database)/documents/users/$(userId)/settings/preferences)
+        || get(/databases/$(database)/documents/users/$(userId)/settings/preferences).data.get(category, true) == true;
+    }
+
+    // A valid friendship may have one directional record left by an older release.
+    // Both records are participant-owned; validating stored UIDs prevents path-only spoofing.
+    function hasFriendship(uidA, uidB) {
+      return (
+        exists(/databases/$(database)/documents/friendships/$(uidA + '__' + uidB))
+        && get(/databases/$(database)/documents/friendships/$(uidA + '__' + uidB)).data.uid == uidA
+        && get(/databases/$(database)/documents/friendships/$(uidA + '__' + uidB)).data.friendUid == uidB
+      ) || (
+        exists(/databases/$(database)/documents/friendships/$(uidB + '__' + uidA))
+        && get(/databases/$(database)/documents/friendships/$(uidB + '__' + uidA)).data.uid == uidB
+        && get(/databases/$(database)/documents/friendships/$(uidB + '__' + uidA)).data.friendUid == uidA
+      );
+    }
+
+    function validProfileKeys() {
+      return request.resource.data.keys().hasOnly([
+        'uid', 'displayName', 'email', 'photoURL', 'provider',
+        'createdAt', 'updatedAt', 'suspended', 'suspensionReason', 'suspendedAt'
+      ]);
+    }
+
+    match /users/{userId} {
+      allow get, list: if ownsUserDocument(userId) || isAdmin();
+
+      // Users can create only their own basic profile. Roles/suspension fields are never accepted here.
+      allow create: if ownsUserDocument(userId)
+        && request.resource.data.keys().hasOnly([
+          'uid', 'displayName', 'email', 'photoURL', 'provider', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.provider in ['password', 'google.com']
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // The member may change only editable profile fields, never account status or access.
+      allow update: if ownsUserDocument(userId)
+        && validProfileKeys()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'displayName', 'photoURL', 'updatedAt'
+        ])
+        && resource.data.get('suspended', false) != true
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.provider == resource.data.provider
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.updatedAt == request.time;
+
+      // Admin can only modify the explicit suspension fields. No admin role field is stored client-side.
+      allow update: if isAdmin()
+        && userId != request.auth.uid
+        && validProfileKeys()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'suspended', 'suspensionReason', 'suspendedAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.suspended is bool
+        && request.resource.data.suspensionReason is string
+        && request.resource.data.suspensionReason.size() <= 300
+        && request.resource.data.updatedAt == request.time
+        && (
+          (request.resource.data.suspended == true
+            && request.resource.data.suspendedAt == request.time)
+          ||
+          (request.resource.data.suspended == false
+            && request.resource.data.suspendedAt == null)
+        );
+
+      allow delete: if false;
+
+      // Per-member chat deletion marker: hides the member's earlier copy without
+      // deleting the other participant's shared message documents.
+      match /hiddenConversations/{conversationId} {
+        allow read: if ownsUserDocument(userId) && isActiveMember();
+        allow create, update: if ownsUserDocument(userId) && isActiveMember()
+          && request.resource.data.keys().hasOnly(['conversationId','deletedAt','updatedAt'])
+          && request.resource.data.conversationId == conversationId
+          && request.resource.data.deletedAt == request.time
+          && request.resource.data.updatedAt == request.time
+          && exists(/databases/$(database)/documents/conversations/$(conversationId))
+          && get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids.hasAny([request.auth.uid]);
+        allow delete: if ownsUserDocument(userId) && isActiveMember();
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if ownsUserDocument(userId) && isActiveMember();
+
+        // Admin-authored account and moderation updates.
+        allow create: if isAdmin()
+          && request.resource.data.keys().hasOnly([
+            'type', 'title', 'message', 'contentId', 'contentTitle',
+            'sourceCommentId', 'parentCommentId', 'link', 'isRead',
+            'createdAt', 'createdByUid', 'announcementId', 'conversationId', 'senderUid', 'postId', 'communityId'
+          ])
+          && request.resource.data.type in ['moderation', 'content', 'announcement']
+          && wantsNotifications(userId, request.resource.data.type == 'moderation' ? 'moderation' : 'content')
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 120
+          && request.resource.data.message is string
+          && request.resource.data.message.size() <= 700
+          && request.resource.data.isRead == false
+          && request.resource.data.createdByUid == request.auth.uid
+          && request.resource.data.createdAt == request.time;
+
+        // A member may notify the owner of a parent comment only after the new reply
+        // exists and the parent belongs to the notification recipient.
+        allow create: if isActiveMember()
+          && request.auth.uid != userId
+          && request.resource.data.keys().hasOnly([
+            'type', 'title', 'message', 'contentId', 'contentTitle',
+            'sourceCommentId', 'parentCommentId', 'link', 'isRead', 'createdAt', 'senderUid', 'conversationId', 'postId', 'communityId', 'announcementId'
+          ])
+          && request.resource.data.type == 'reply'
+          && wantsNotifications(userId, 'replies')
+          && request.resource.data.contentId is string
+          && request.resource.data.contentTitle is string
+          && request.resource.data.link == '/content/' + request.resource.data.contentId
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 120
+          && request.resource.data.message is string
+          && request.resource.data.message.size() <= 700
+          && request.resource.data.isRead == false
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.sourceCommentId is string
+          && request.resource.data.parentCommentId is string
+          && exists(/databases/$(database)/documents/comments/$(request.resource.data.sourceCommentId))
+          && exists(/databases/$(database)/documents/comments/$(request.resource.data.parentCommentId))
+          && get(/databases/$(database)/documents/comments/$(request.resource.data.sourceCommentId)).data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/comments/$(request.resource.data.sourceCommentId)).data.parentId == request.resource.data.parentCommentId
+          && get(/databases/$(database)/documents/comments/$(request.resource.data.sourceCommentId)).data.contentId == request.resource.data.contentId
+          && get(/databases/$(database)/documents/comments/$(request.resource.data.parentCommentId)).data.uid == userId
+          && get(/databases/$(database)/documents/comments/$(request.resource.data.parentCommentId)).data.contentId == request.resource.data.contentId;
+
+        // Event notifications can only be sent for a corresponding request/message/post/group event.
+        allow create: if isActiveMember() && request.auth.uid != userId
+          && request.resource.data.keys().hasOnly(['type','title','message','link','isRead','createdAt','senderUid','conversationId','postId','commentId','communityId','announcementId'])
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.title is string && request.resource.data.title.size() <= 120
+          && request.resource.data.message is string && request.resource.data.message.size() <= 700
+          && request.resource.data.isRead == false && request.resource.data.createdAt == request.time
+          && (
+            (request.resource.data.type == 'friend_request'
+              && wantsNotifications(userId, 'friendRequests')
+              && request.resource.data.link == '/friends'
+              && exists(/databases/$(database)/documents/friendRequests/$(request.auth.uid + '__' + userId))
+              && get(/databases/$(database)/documents/friendRequests/$(request.auth.uid + '__' + userId)).data.status == 'pending')
+            ||
+            (request.resource.data.type == 'friend_request_accepted'
+              && wantsNotifications(userId, 'friendRequests')
+              && request.resource.data.link == '/friends'
+              && existsAfter(/databases/$(database)/documents/friendRequests/$(userId + '__' + request.auth.uid))
+              && getAfter(/databases/$(database)/documents/friendRequests/$(userId + '__' + request.auth.uid)).data.status == 'accepted')
+            ||
+            (request.resource.data.type == 'chat'
+              && wantsNotifications(userId, 'chat')
+              && request.resource.data.conversationId is string
+              && exists(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId))
+              && get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.memberUids.hasAll([request.auth.uid,userId])
+              && request.resource.data.link == '/messages/' + request.resource.data.conversationId)
+            ||
+            (request.resource.data.type == 'group_chat_invite'
+              && wantsNotifications(userId, 'chat')
+              && request.resource.data.conversationId is string
+              && existsAfter(/databases/$(database)/documents/conversationInvites/$(request.resource.data.conversationId + '__' + userId))
+              && getAfter(/databases/$(database)/documents/conversationInvites/$(request.resource.data.conversationId + '__' + userId)).data.senderUid == request.auth.uid
+              && getAfter(/databases/$(database)/documents/conversationInvites/$(request.resource.data.conversationId + '__' + userId)).data.recipientUid == userId
+              && getAfter(/databases/$(database)/documents/conversationInvites/$(request.resource.data.conversationId + '__' + userId)).data.status == 'pending'
+              && request.resource.data.link == '/messages/' + request.resource.data.conversationId)
+            ||
+            (request.resource.data.type == 'mention'
+              && wantsNotifications(userId, 'mentions')
+              && request.resource.data.senderUid == request.auth.uid
+              && (
+                (request.resource.data.postId is string
+                  && exists(/databases/$(database)/documents/posts/$(request.resource.data.postId))
+                  && get(/databases/$(database)/documents/posts/$(request.resource.data.postId)).data.uid == request.auth.uid
+                  && request.resource.data.link == '/post/' + request.resource.data.postId)
+                || (request.resource.data.communityId is string
+                  && exists(/databases/$(database)/documents/communities/$(request.resource.data.communityId))
+                  && get(/databases/$(database)/documents/communities/$(request.resource.data.communityId)).data.memberUids.hasAny([request.auth.uid])
+                  && get(/databases/$(database)/documents/communities/$(request.resource.data.communityId)).data.memberUids.hasAny([userId])
+                  && request.resource.data.link == '/communities/' + request.resource.data.communityId)
+                || (request.resource.data.conversationId is string
+                  && exists(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId))
+                  && get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.type == 'group'
+                  && get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.memberUids.hasAll([request.auth.uid, userId])
+                  && request.resource.data.link == '/messages/' + request.resource.data.conversationId)
+              ))
+            ||
+            (request.resource.data.type == 'group_activity'
+              && wantsNotifications(userId, 'groupActivity')
+              && request.resource.data.communityId is string
+              && exists(/databases/$(database)/documents/communities/$(request.resource.data.communityId))
+              && get(/databases/$(database)/documents/communities/$(request.resource.data.communityId)).data.memberUids.hasAny([request.auth.uid])
+              && get(/databases/$(database)/documents/communities/$(request.resource.data.communityId)).data.memberUids.hasAny([userId]))
+            ||
+            (request.resource.data.type == 'post_reply'
+              && wantsNotifications(userId, 'replies')
+              && request.resource.data.postId is string
+              && request.resource.data.commentId is string
+              && exists(/databases/$(database)/documents/postComments/$(request.resource.data.commentId))
+              && get(/databases/$(database)/documents/postComments/$(request.resource.data.commentId)).data.uid == request.auth.uid
+              && get(/databases/$(database)/documents/postComments/$(request.resource.data.commentId)).data.parentId is string
+              && get(/databases/$(database)/documents/postComments/$(request.resource.data.commentId)).data.postId == request.resource.data.postId
+              && exists(/databases/$(database)/documents/postComments/$(get(/databases/$(database)/documents/postComments/$(request.resource.data.commentId)).data.parentId))
+              && get(/databases/$(database)/documents/postComments/$(get(/databases/$(database)/documents/postComments/$(request.resource.data.commentId)).data.parentId)).data.uid == userId
+              && request.resource.data.link == '/post/' + request.resource.data.postId)
+          );
+
+        allow update: if ownsUserDocument(userId)
+          && isActiveMember()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt'])
+          && request.resource.data.isRead is bool
+          && request.resource.data.isRead == true
+          && request.resource.data.readAt == request.time;
+
+        allow delete: if ownsUserDocument(userId) && isActiveMember();
+      }
+
+      match /favorites/{contentId} {
+        allow get, list: if ownsUserDocument(userId) && isActiveMember();
+        allow create: if ownsUserDocument(userId)
+          && isActiveMember()
+          && request.resource.data.keys().hasOnly(['contentId', 'title', 'category', 'savedAt'])
+          && request.resource.data.contentId == contentId
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 140
+          && request.resource.data.category is string
+          && request.resource.data.category.size() <= 60
+          && request.resource.data.savedAt == request.time
+          && exists(/databases/$(database)/documents/content/$(contentId))
+          && get(/databases/$(database)/documents/content/$(contentId)).data.status == 'published';
+        allow update: if false;
+        allow delete: if ownsUserDocument(userId) && isActiveMember();
+      }
+
+      match /savedPosts/{postId} {
+        allow get, list: if ownsUserDocument(userId) && isActiveMember();
+        allow create: if ownsUserDocument(userId) && isActiveMember()
+          && request.resource.data.keys().hasOnly(['postId','savedAt'])
+          && request.resource.data.postId == postId && request.resource.data.savedAt == request.time
+          && exists(/databases/$(database)/documents/posts/$(postId))
+          && get(/databases/$(database)/documents/posts/$(postId)).data.status == 'published';
+        allow update: if false;
+        allow delete: if ownsUserDocument(userId) && isActiveMember();
+      }
+
+      match /blockedUsers/{blockedUid} {
+        allow get, list: if ownsUserDocument(userId) && isActiveMember();
+        allow create: if ownsUserDocument(userId) && isActiveMember() && blockedUid != userId
+          && request.resource.data.keys().hasOnly(['uid','createdAt'])
+          && request.resource.data.uid == blockedUid && request.resource.data.createdAt == request.time;
+        allow update: if false;
+        allow delete: if ownsUserDocument(userId) && isActiveMember();
+      }
+
+      match /mutedUsers/{mutedUid} {
+        allow get, list: if ownsUserDocument(userId) && isActiveMember();
+        allow create: if ownsUserDocument(userId) && isActiveMember() && mutedUid != userId
+          && request.resource.data.keys().hasOnly(['uid','createdAt'])
+          && request.resource.data.uid == mutedUid && request.resource.data.createdAt == request.time;
+        allow update: if false;
+        allow delete: if ownsUserDocument(userId) && isActiveMember();
+      }
+
+      match /settings/{settingId} {
+        allow get, list: if (ownsUserDocument(userId) && isActiveMember()) || isAdmin();
+        allow create, update: if ownsUserDocument(userId) && isActiveMember()
+          && settingId == 'preferences'
+          && request.resource.data.keys().hasOnly(['friendRequests','chat','replies','mentions','groupActivity','moderation','content','showOnline','updatedAt'])
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.friendRequests is bool && request.resource.data.chat is bool
+          && request.resource.data.replies is bool && request.resource.data.mentions is bool
+          && request.resource.data.groupActivity is bool && request.resource.data.moderation is bool
+          && request.resource.data.content is bool;
+        allow delete: if ownsUserDocument(userId) && isActiveMember();
+      }
+    }
+
+    match /content/{contentId} {
+      allow read: if isAdmin() || (isActiveMember() && resource.data.status == 'published');
+
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'title', 'body', 'category', 'status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 140
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 20000
+        && request.resource.data.category is string
+        && request.resource.data.category.size() <= 60
+        && request.resource.data.status in ['draft', 'published', 'hidden']
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'title', 'body', 'category', 'status', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'title', 'body', 'category', 'status', 'updatedBy', 'updatedAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 140
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 20000
+        && request.resource.data.category is string
+        && request.resource.data.category.size() <= 60
+        && request.resource.data.status in ['draft', 'published', 'hidden']
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isAdmin();
+
+      match /likes/{likeUid} {
+        allow read: if isAdmin() || (isActiveMember()
+          && get(/databases/$(database)/documents/content/$(contentId)).data.status == 'published');
+        allow create: if isActiveMember()
+          && request.auth.uid == likeUid
+          && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.createdAt == request.time
+          && get(/databases/$(database)/documents/content/$(contentId)).data.status == 'published';
+        allow update: if false;
+        allow delete: if isActiveMember() && request.auth.uid == likeUid;
+      }
+    }
+
+    match /comments/{commentId} {
+      allow read: if isAdmin() || (isActiveMember() && (
+        resource.data.uid == request.auth.uid || resource.data.status == 'approved'
+      ));
+
+      allow create: if isActiveMember()
+        && request.resource.data.keys().hasOnly([
+          'contentId', 'contentTitle', 'uid', 'displayName', 'body', 'parentId', 'status', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.contentId is string
+        && exists(/databases/$(database)/documents/content/$(request.resource.data.contentId))
+        && get(/databases/$(database)/documents/content/$(request.resource.data.contentId)).data.status == 'published'
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 3000
+        && request.resource.data.status == 'pending'
+        && (
+          request.resource.data.get('parentId', null) == null
+          || (
+            request.resource.data.parentId is string
+            && exists(/databases/$(database)/documents/comments/$(request.resource.data.parentId))
+            && get(/databases/$(database)/documents/comments/$(request.resource.data.parentId)).data.status == 'approved'
+            && get(/databases/$(database)/documents/comments/$(request.resource.data.parentId)).data.contentId == request.resource.data.contentId
+          )
+        )
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'contentId', 'contentTitle', 'uid', 'displayName', 'body', 'parentId', 'status', 'createdAt', 'updatedAt',
+          'moderatedBy', 'moderatedAt', 'moderationReason'
+        ])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'moderatedBy', 'moderatedAt', 'moderationReason', 'updatedAt'
+        ])
+        && request.resource.data.status in ['pending', 'approved', 'removed']
+        && request.resource.data.moderatedBy == request.auth.uid
+        && request.resource.data.moderatedAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.moderationReason is string
+        && request.resource.data.moderationReason.size() <= 300;
+
+      allow update: if isActiveMember()
+        && resource.data.uid == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body', 'updatedAt'])
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 3000
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isAdmin() || (isActiveMember()
+        && resource.data.uid == request.auth.uid
+        && resource.data.status == 'pending');
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.reporterUid == request.auth.uid);
+
+      allow create: if isActiveMember()
+        && request.resource.data.keys().hasOnly([
+          'reporterUid', 'reporterEmail', 'targetType', 'targetId', 'reason', 'status', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.reporterEmail == request.auth.token.email
+        && request.resource.data.targetType in ['content', 'comment', 'user', 'post', 'conversation']
+        && request.resource.data.targetId is string
+        && request.resource.data.targetId.size() > 0
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() >= 3
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.status == 'open'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow update: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'reporterUid', 'reporterEmail', 'targetType', 'targetId', 'reason', 'status', 'createdAt', 'updatedAt',
+          'reviewNote', 'reviewedBy', 'reviewedAt'
+        ])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'updatedAt', 'reviewNote', 'reviewedBy', 'reviewedAt'
+        ])
+        && request.resource.data.status in ['open', 'reviewed', 'resolved', 'dismissed']
+        && request.resource.data.reviewNote is string
+        && request.resource.data.reviewNote.size() <= 500
+        && request.resource.data.reviewedBy == request.auth.uid
+        && request.resource.data.reviewedAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'action', 'targetType', 'targetId', 'details', 'actorUid', 'actorEmail', 'createdAt'
+        ])
+        && request.resource.data.action is string
+        && request.resource.data.action.size() > 0
+        && request.resource.data.action.size() <= 80
+        && request.resource.data.targetType is string
+        && request.resource.data.targetType.size() <= 80
+        && request.resource.data.targetId is string
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 500
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.actorEmail == request.auth.token.email
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    function validSocialProfile(profileUid) {
+      return request.resource.data.keys().hasOnly([
+        'uid','displayName','username','bio','avatarURL','coverURL','coverPosition','privacy',
+        'createdAt','updatedAt','displayNameChangedAt','usernameChangedAt'
+      ])
+      && request.resource.data.uid == profileUid
+      && request.resource.data.displayName is string && request.resource.data.displayName.size() > 0 && request.resource.data.displayName.size() <= 80
+      && request.resource.data.username is string && request.resource.data.username.matches('^[a-z0-9_.]{3,20}$')
+      && request.resource.data.bio is string && request.resource.data.bio.size() <= 240
+      && request.resource.data.avatarURL is string && request.resource.data.avatarURL.size() <= 2000
+      && request.resource.data.coverURL is string && request.resource.data.coverURL.size() <= 2000
+      && (!request.resource.data.keys().hasAny(['coverPosition'])
+          || (request.resource.data.coverPosition is map
+              && request.resource.data.coverPosition.keys().hasOnly(['x','y'])
+              && request.resource.data.coverPosition.x is number
+              && request.resource.data.coverPosition.x >= 0 && request.resource.data.coverPosition.x <= 100
+              && request.resource.data.coverPosition.y is number
+              && request.resource.data.coverPosition.y >= 0 && request.resource.data.coverPosition.y <= 100))
+      && request.resource.data.privacy in ['public','private']
+      && request.resource.data.updatedAt == request.time;
+    }
+
+    match /publicProfiles/{profileUid} {
+      allow get: if isAdmin() || (isActiveMember() && (profileUid == request.auth.uid || resource.data.privacy == 'public'));
+      allow list: if isAdmin() || (isActiveMember() && resource.data.privacy == 'public');
+      allow create: if ownsUserDocument(profileUid) && isActiveMember() && validSocialProfile(profileUid)
+        && request.resource.data.createdAt == request.time
+        && existsAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username))
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == request.auth.uid;
+      allow update: if (isAdmin() && validSocialProfile(profileUid)
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName'])
+              || request.resource.data.displayNameChangedAt == request.time)
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['username'])
+              || (request.resource.data.usernameChangedAt == request.time
+                  && existsAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username))
+                  && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == profileUid)))
+        || (ownsUserDocument(profileUid) && isActiveMember() && validSocialProfile(profileUid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName','username','bio','avatarURL','coverURL','coverPosition','privacy','updatedAt','displayNameChangedAt','usernameChangedAt'])
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayNameChangedAt']) || request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName']))
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['usernameChangedAt']) || request.resource.data.diff(resource.data).affectedKeys().hasAny(['username']))
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName'])
+              || !resource.data.keys().hasAny(['displayNameChangedAt'])
+              || request.time >= resource.data.displayNameChangedAt + duration.value(90, 'd'))
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['username'])
+              || !resource.data.keys().hasAny(['usernameChangedAt'])
+              || request.time >= resource.data.usernameChangedAt + duration.value(90, 'd'))
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['displayName']) || request.resource.data.displayNameChangedAt == request.time)
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['username']) || request.resource.data.usernameChangedAt == request.time)
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['username'])
+              || (existsAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username))
+                  && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == request.auth.uid)));
+      allow delete: if false;
+    }
+
+    match /usernames/{username} {
+      allow get: if isActiveMember();
+      allow list: if false;
+      allow create: if (isActiveMember() && request.resource.data.keys().hasOnly(['uid','username','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.username == username
+        && username.matches('^[a-z0-9_.]{3,20}$')
+        && request.resource.data.createdAt == request.time
+        && existsAfter(/databases/$(database)/documents/publicProfiles/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/publicProfiles/$(request.auth.uid)).data.username == username)
+        || (isAdmin() && request.resource.data.keys().hasOnly(['uid','username','createdAt'])
+        && request.resource.data.uid is string && request.resource.data.username == username
+        && username.matches('^[a-z0-9_.]{3,20}$') && request.resource.data.createdAt == request.time);
+      allow update: if false;
+      allow delete: if isAdmin() || (isActiveMember() && resource.data.uid == request.auth.uid);
+    }
+
+    match /profileRequests/{requestId} {
+      allow get, list: if isAdmin() || (isActiveMember() && resource.data.uid == request.auth.uid);
+      allow create: if isActiveMember() && request.resource.data.keys().hasOnly([
+        'uid','email','currentDisplayName','currentUsername','proposedDisplayName','proposedUsername','requestType','reason','status','createdAt','updatedAt'
+      ]) && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.proposedDisplayName is string && request.resource.data.proposedDisplayName.size() > 0 && request.resource.data.proposedDisplayName.size() <= 80
+        && request.resource.data.proposedUsername is string && request.resource.data.proposedUsername.matches('^[a-z0-9_.]{3,20}$')
+        && request.resource.data.requestType == 'urgent_profile_change'
+        && request.resource.data.status == 'pending' && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','reviewedBy','reviewedAt','updatedAt'])
+        && request.resource.data.status in ['approved','rejected']
+        && request.resource.data.reviewedBy == request.auth.uid
+        && request.resource.data.reviewedAt == request.time && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /profileActivity/{activityId} {
+      allow get, list: if isAdmin() || (isActiveMember() && resource.data.uid == request.auth.uid);
+      allow create: if isActiveMember() && request.resource.data.keys().hasOnly([
+        'uid','actorUid','action','oldDisplayName','displayName','oldUsername','username','createdAt'
+      ]) && request.resource.data.uid == request.auth.uid && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.action == 'profile_updated' && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /friendRequests/{requestId} {
+      // The client reads its deterministic outgoing-request path before it creates it.
+      // For a missing document, resource.data is unavailable; allow this single-document
+      // GET when the path's sender prefix is the signed-in UID. The ternary prevents
+      // evaluating resource.data on that path. Existing incoming requests remain limited
+      // to the sender/recipient, and collection queries remain participant-only below.
+      // Allow existence checks on the deterministic pair ID even when the request
+      // document does not exist. A caller can only probe a path containing their UID.
+      allow get: if isAdmin() || (isActiveMember() && (
+        // The deterministic path itself is participant-scoped. This also permits
+        // recovery of legacy documents whose stored participant fields are stale.
+        (requestId.split('__').size() == 2
+          && (requestId.split('__')[0] == request.auth.uid || requestId.split('__')[1] == request.auth.uid))
+        || (resource.data.senderUid == request.auth.uid || resource.data.recipientUid == request.auth.uid)
+      ));
+      allow list: if isAdmin() || (isActiveMember() && (resource.data.senderUid == request.auth.uid || resource.data.recipientUid == request.auth.uid));
+      allow create: if isActiveMember() && request.resource.data.keys().hasOnly([
+        'senderUid','recipientUid','senderName','senderUsername','recipientName','status','createdAt','updatedAt'
+      ]) && request.resource.data.senderUid == request.auth.uid && request.resource.data.recipientUid is string
+        && request.resource.data.recipientUid != request.auth.uid
+        && requestId == request.auth.uid + '__' + request.resource.data.recipientUid
+        && request.resource.data.status == 'pending' && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time
+        && exists(/databases/$(database)/documents/publicProfiles/$(request.resource.data.recipientUid));
+      allow update: if (isActiveMember() && resource.data.recipientUid == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+        && request.resource.data.status in ['accepted','rejected'] && request.resource.data.updatedAt == request.time)
+        || (isActiveMember()
+          // Resend path: the document ID itself must prove sender ownership. This also
+          // lets the sender repair stale legacy metadata on a rejected request safely.
+          && resource.data.recipientUid is string
+          && resource.data.recipientUid != request.auth.uid
+          && requestId == request.auth.uid + '__' + resource.data.recipientUid
+          && resource.data.status == 'rejected'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['senderUid','senderName','senderUsername','recipientName','status','updatedAt'])
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.recipientUid == resource.data.recipientUid
+          && request.resource.data.senderName is string && request.resource.data.senderName.size() <= 80
+          && request.resource.data.senderUsername is string && request.resource.data.senderUsername.size() <= 20
+          && request.resource.data.recipientName is string && request.resource.data.recipientName.size() <= 80
+          && request.resource.data.status == 'pending'
+          && request.resource.data.updatedAt == request.time);
+      allow delete: if isActiveMember() && (
+        resource.data.senderUid == request.auth.uid || resource.data.recipientUid == request.auth.uid
+        || (requestId.split('__').size() == 2 && (requestId.split('__')[0] == request.auth.uid || requestId.split('__')[1] == request.auth.uid))
+      );
+    }
+
+    match /friendships/{friendshipId} {
+      // A signed-in member may check their own deterministic UID-pair document,
+      // including the expected not-found result. Existing data remains participant-only.
+      allow get: if isAdmin() || (isActiveMember() && (
+        (friendshipId.split('__').size() == 2
+          && (friendshipId.split('__')[0] == request.auth.uid || friendshipId.split('__')[1] == request.auth.uid))
+        || (resource.data.uid == request.auth.uid || resource.data.friendUid == request.auth.uid)
+      ));
+      allow list: if isAdmin() || (isActiveMember() && (resource.data.uid == request.auth.uid || resource.data.friendUid == request.auth.uid));
+      allow create: if isActiveMember()
+        && request.resource.data.keys().hasOnly(['uid','friendUid','createdAt'])
+        && request.resource.data.uid is string && request.resource.data.friendUid is string
+        && request.resource.data.uid != request.resource.data.friendUid
+        && (request.resource.data.uid == request.auth.uid || request.resource.data.friendUid == request.auth.uid)
+        && request.resource.data.createdAt == request.time
+        && (
+          (existsAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.uid + '__' + request.resource.data.friendUid))
+            && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.uid + '__' + request.resource.data.friendUid)).data.status == 'accepted')
+          ||
+          (existsAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.friendUid + '__' + request.resource.data.uid))
+            && getAfter(/databases/$(database)/documents/friendRequests/$(request.resource.data.friendUid + '__' + request.resource.data.uid)).data.status == 'accepted')
+          ||
+          (exists(/databases/$(database)/documents/friendships/$(request.resource.data.friendUid + '__' + request.resource.data.uid))
+            && get(/databases/$(database)/documents/friendships/$(request.resource.data.friendUid + '__' + request.resource.data.uid)).data.uid == request.resource.data.friendUid
+            && get(/databases/$(database)/documents/friendships/$(request.resource.data.friendUid + '__' + request.resource.data.uid)).data.friendUid == request.resource.data.uid)
+        );
+      allow update: if false;
+      allow delete: if isActiveMember() && (resource.data.uid == request.auth.uid || resource.data.friendUid == request.auth.uid);
+    }
+
+    match /posts/{postId} {
+      allow get, list: if isAdmin() || (isActiveMember() && (resource.data.status == 'published' || resource.data.uid == request.auth.uid));
+      allow create: if isActiveMember() && request.resource.data.keys().hasOnly([
+        'uid','displayName','username','avatarURL','body','imageURL','category','tags','status','pinned','reactionCount','commentCount','createdAt','updatedAt','editedAt','editHistory'
+      ]) && request.resource.data.uid == request.auth.uid
+        && request.resource.data.displayName is string && request.resource.data.displayName.size() <= 80
+        && request.resource.data.username is string && request.resource.data.username.size() <= 20
+        && request.resource.data.avatarURL is string && request.resource.data.avatarURL.size() <= 2000
+        && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 5000
+        && request.resource.data.imageURL is string && request.resource.data.imageURL.size() <= 2000
+        && request.resource.data.category is string && request.resource.data.category.size() <= 50
+        && request.resource.data.tags is list && request.resource.data.tags.size() <= 10
+        && request.resource.data.status in ['published','draft'] && request.resource.data.pinned == false
+        && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin() && request.resource.data.keys().hasOnly([
+        'uid','displayName','username','avatarURL','body','imageURL','category','tags','status','pinned','reactionCount','commentCount','createdAt','updatedAt','editedAt','editHistory','moderatedBy','moderatedAt'
+      ])
+        || (isActiveMember() && resource.data.uid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body','imageURL','category','tags','updatedAt','editedAt','editHistory','pinned','status'])
+          && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 5000
+          && request.resource.data.imageURL is string && request.resource.data.imageURL.size() <= 2000
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.uid == resource.data.uid && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.status in ['published','draft']
+          && request.resource.data.pinned is bool
+          && request.resource.data.editHistory is list && request.resource.data.editHistory.size() <= 10
+          && request.resource.data.tags is list && request.resource.data.tags.size() <= 10);
+      allow delete: if isAdmin() || (isActiveMember() && resource.data.uid == request.auth.uid);
+
+      match /reactions/{reactionUid} {
+        allow get, list: if isActiveMember() && get(/databases/$(database)/documents/posts/$(postId)).data.status == 'published';
+        allow create, update: if isActiveMember() && reactionUid == request.auth.uid
+          && get(/databases/$(database)/documents/posts/$(postId)).data.status == 'published'
+          && request.resource.data.keys().hasOnly(['uid','type','createdAt'])
+          && request.resource.data.uid == request.auth.uid && request.resource.data.type in ['like','love','haha','wow','sad','celebrate','insightful']
+          && request.resource.data.createdAt == request.time;
+        allow delete: if isActiveMember() && reactionUid == request.auth.uid;
+      }
+    }
+
+    match /postComments/{commentId} {
+      allow get, list: if isAdmin() || (isActiveMember() && (resource.data.status == 'approved' || resource.data.uid == request.auth.uid));
+      allow create: if isActiveMember() && request.resource.data.keys().hasOnly(['postId','uid','displayName','body','parentId','status','createdAt','updatedAt'])
+        && request.resource.data.uid == request.auth.uid && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 2000
+        && request.resource.data.status == 'approved' && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time
+        && exists(/databases/$(database)/documents/posts/$(request.resource.data.postId))
+        && get(/databases/$(database)/documents/posts/$(request.resource.data.postId)).data.status == 'published'
+        && (request.resource.data.get('parentId', null) == null || (request.resource.data.parentId is string
+          && exists(/databases/$(database)/documents/postComments/$(request.resource.data.parentId))
+          && get(/databases/$(database)/documents/postComments/$(request.resource.data.parentId)).data.status == 'approved'
+          && get(/databases/$(database)/documents/postComments/$(request.resource.data.parentId)).data.postId == request.resource.data.postId));
+      allow update: if (isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt','moderatedBy','moderatedAt','moderationReason'])
+        && request.resource.data.status in ['approved','removed']
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.moderatedBy == request.auth.uid
+        && request.resource.data.moderatedAt == request.time
+        && request.resource.data.moderationReason is string
+        && request.resource.data.moderationReason.size() <= 240)
+        || (isActiveMember() && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body','updatedAt'])
+        && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 2000
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.uid == resource.data.uid && request.resource.data.postId == resource.data.postId
+        && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.status == resource.data.status);
+      allow delete: if isAdmin() || (isActiveMember() && resource.data.uid == request.auth.uid);
+    }
+
+    match /conversationInvites/{inviteId} {
+      allow get, list: if isActiveMember() && (resource.data.senderUid == request.auth.uid || resource.data.recipientUid == request.auth.uid);
+      allow create: if isActiveMember()
+        && request.resource.data.keys().hasOnly(['conversationId','senderUid','recipientUid','status','createdAt','updatedAt'])
+        && request.resource.data.senderUid == request.auth.uid
+        && request.resource.data.recipientUid is string
+        && request.resource.data.recipientUid != request.auth.uid
+        && request.resource.data.conversationId is string
+        && inviteId == request.resource.data.conversationId + '__' + request.resource.data.recipientUid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time
+        && existsAfter(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId))
+        && getAfter(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.type == 'group'
+        && getAfter(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.createdBy == request.auth.uid
+        && getAfter(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.memberUids == [request.auth.uid]
+        && hasFriendship(request.auth.uid, request.resource.data.recipientUid);
+      allow update: if isActiveMember()
+        && resource.data.recipientUid == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+        && request.resource.data.status in ['accepted','rejected']
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    match /conversations/{conversationId} {
+      // Direct conversation IDs are deterministic UID pairs. Permit only safe
+      // not-found checks for IDs containing this member's UID; create rules below
+      // still require an actual friendship before a direct conversation is created.
+      allow get: if isAdmin() || (isActiveMember() && (
+        // Existing conversations are readable only by stored members. A UID-pair
+        // path check is allowed only when the conversation document is missing,
+        // so the client can safely test whether it needs to create a direct chat.
+        exists(/databases/$(database)/documents/conversations/$(conversationId))
+          ? (resource.data.memberUids is list && resource.data.memberUids.hasAny([request.auth.uid]))
+          : (conversationId.split('__').size() == 2
+              && (conversationId.split('__')[0] == request.auth.uid || conversationId.split('__')[1] == request.auth.uid))
+      ));
+      allow list: if isAdmin() || (isActiveMember() && resource.data.memberUids.hasAny([request.auth.uid]));
+      allow create: if isActiveMember()
+        && request.resource.data.memberUids is list
+        && request.resource.data.memberUids.hasAny([request.auth.uid])
+        && request.resource.data.memberUids.toSet().size() == request.resource.data.memberUids.size()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastMessage == ''
+        && request.resource.data.lastMessageAt == request.time
+        && request.resource.data.mutedBy is list && request.resource.data.mutedBy.size() == 0
+        && request.resource.data.blockedBy is list && request.resource.data.blockedBy.size() == 0
+        && ((request.resource.data.type == 'direct'
+          && request.resource.data.keys().hasOnly(['type','memberUids','createdBy','createdAt','updatedAt','lastMessage','lastMessageAt','mutedBy','blockedBy'])
+          && request.resource.data.memberUids.size() == 2
+          && hasFriendship(request.auth.uid, (request.resource.data.memberUids[0] == request.auth.uid ? request.resource.data.memberUids[1] : request.resource.data.memberUids[0])))
+          || (request.resource.data.type == 'group'
+          && request.resource.data.keys().hasOnly(['type','name','memberUids','moderatorUids','createdBy','createdAt','updatedAt','lastMessage','lastMessageAt','mutedBy','blockedBy'])
+          && request.resource.data.memberUids == [request.auth.uid]
+          && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+          && request.resource.data.moderatorUids == [request.auth.uid]));
+      allow update: if (isActiveMember()
+          && resource.data.memberUids.hasAny([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage','lastMessageAt','updatedAt','lastMessageSenderUid','lastMessageReadBy'])
+          && request.resource.data.lastMessage is string && request.resource.data.lastMessage.size() <= 3000
+          && request.resource.data.lastMessageAt == request.time && request.resource.data.updatedAt == request.time
+          && request.resource.data.lastMessageSenderUid == request.auth.uid
+          && request.resource.data.lastMessageReadBy is list
+          && request.resource.data.lastMessageReadBy == [request.auth.uid])
+        // A conversation member may acknowledge an incoming latest message even
+        // when that member has disabled chat notifications. Preferences gate only
+        // notification documents; they must never gate message read-state/badges.
+        || (isActiveMember()
+          && resource.data.memberUids.hasAny([request.auth.uid])
+          && resource.data.get('lastMessageSenderUid', '') != request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessageReadBy'])
+          && request.resource.data.lastMessageReadBy is list
+          && request.resource.data.lastMessageReadBy.hasAll(resource.data.get('lastMessageReadBy', []))
+          && request.resource.data.lastMessageReadBy.toSet().difference(resource.data.get('lastMessageReadBy', []).toSet()).hasOnly([request.auth.uid])
+          && request.resource.data.lastMessageReadBy.hasAny([request.auth.uid]))
+        || (isActiveMember()
+          && resource.data.memberUids.hasAny([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mutedBy'])
+          && request.resource.data.mutedBy is list && request.resource.data.mutedBy.size() <= 20
+          && request.resource.data.mutedBy.toSet().difference(resource.data.mutedBy.toSet()).hasOnly([request.auth.uid])
+          && resource.data.mutedBy.toSet().difference(request.resource.data.mutedBy.toSet()).hasOnly([request.auth.uid]))
+        || (isActiveMember()
+          && resource.data.type == 'direct'
+          && resource.data.memberUids.hasAny([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['blockedBy'])
+          && request.resource.data.blockedBy is list && request.resource.data.blockedBy.size() <= 2
+          && request.resource.data.blockedBy.toSet().difference(resource.data.blockedBy.toSet()).hasOnly([request.auth.uid])
+          && resource.data.blockedBy.toSet().difference(request.resource.data.blockedBy.toSet()).hasOnly([request.auth.uid]))
+        || (isActiveMember()
+          && resource.data.type == 'group'
+          && !resource.data.memberUids.hasAny([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids','updatedAt'])
+          && request.resource.data.memberUids is list
+          && request.resource.data.memberUids.size() == resource.data.memberUids.size() + 1
+          && request.resource.data.memberUids.hasAll(resource.data.memberUids)
+          && request.resource.data.memberUids.hasAny([request.auth.uid])
+          && request.resource.data.updatedAt == request.time
+          && existsAfter(/databases/$(database)/documents/conversationInvites/$(conversationId + '__' + request.auth.uid))
+          && getAfter(/databases/$(database)/documents/conversationInvites/$(conversationId + '__' + request.auth.uid)).data.status == 'accepted'
+          && getAfter(/databases/$(database)/documents/conversationInvites/$(conversationId + '__' + request.auth.uid)).data.senderUid == resource.data.createdBy);
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        // Conversation membership remains the security boundary. "Delete my copy"
+        // is a per-user display cutoff, applied by the client after reading only
+        // this member's own conversation. Do not compare query timestamps against
+        // a marker document here: Firestore cannot reliably validate that dynamic
+        // inequality constraint and may deny the entire messages query.
+        allow get, list: if isActiveMember()
+          && get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids.hasAny([request.auth.uid]);
+        allow create: if isActiveMember()
+          && get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids.hasAny([request.auth.uid])
+          && (get(/databases/$(database)/documents/conversations/$(conversationId)).data.type == 'group' || get(/databases/$(database)/documents/conversations/$(conversationId)).data.blockedBy.size() == 0)
+          && (get(/databases/$(database)/documents/conversations/$(conversationId)).data.type != 'direct' || (
+            hasFriendship(request.auth.uid, (get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids[0] == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids[1] : get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids[0]))
+            && !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blockedUsers/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids[0] == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids[1] : get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids[0]))
+            && !exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids[0] == request.auth.uid ? get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids[1] : get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids[0])/blockedUsers/$(request.auth.uid))
+          ))
+          && request.resource.data.keys().hasOnly(['senderUid','senderName','text','imageURL','createdAt','readBy','editedAt'])
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.senderName is string && request.resource.data.senderName.size() <= 80
+          && request.resource.data.text is string && request.resource.data.text.size() <= 3000
+          && request.resource.data.imageURL is string && request.resource.data.imageURL.size() <= 2000
+          && (request.resource.data.text.size() > 0 || request.resource.data.imageURL.size() > 0)
+          && request.resource.data.createdAt == request.time && request.resource.data.readBy == [request.auth.uid];
+        allow update: if isActiveMember()
+          && get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberUids.hasAny([request.auth.uid])
+          && (!exists(/databases/$(database)/documents/users/$(request.auth.uid)/hiddenConversations/$(conversationId))
+            || (resource.data.createdAt is timestamp
+              && get(/databases/$(database)/documents/users/$(request.auth.uid)/hiddenConversations/$(conversationId)).data.deletedAt is timestamp
+              && resource.data.createdAt > get(/databases/$(database)/documents/users/$(request.auth.uid)/hiddenConversations/$(conversationId)).data.deletedAt))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy'])
+          && request.resource.data.readBy is list && request.resource.data.readBy.hasAll(resource.data.readBy)
+          && request.resource.data.readBy.toSet().difference(resource.data.readBy.toSet()).hasOnly([request.auth.uid])
+          && request.resource.data.readBy.hasAny([request.auth.uid]);
+        allow delete: if false;
+      }
+    }
+
+    match /communities/{communityId} {
+      allow get, list: if isAdmin() || isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.keys().hasOnly([
+        'title','description','ownerUid','moderatorUids','memberUids','status','createdAt','updatedAt','announcement','inviteCode'
+      ]) && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.moderatorUids.hasOnly([request.auth.uid]) && request.resource.data.memberUids.hasOnly([request.auth.uid])
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 80
+        && request.resource.data.description is string && request.resource.data.description.size() <= 500
+        && request.resource.data.status == 'active' && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin()
+        || (isActiveMember() && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title','description','status','moderatorUids','announcement','inviteCode','updatedAt','memberUids'])
+          && request.resource.data.moderatorUids is list
+          && request.resource.data.moderatorUids.hasAll([resource.data.ownerUid])
+          && request.resource.data.moderatorUids.size() <= resource.data.memberUids.size()
+          && request.resource.data.moderatorUids.hasOnly(request.resource.data.memberUids)
+          && request.resource.data.updatedAt == request.time)
+        || (isActiveMember() && resource.data.moderatorUids.hasAny([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['announcement','updatedAt'])
+          && request.resource.data.announcement is string && request.resource.data.announcement.size() <= 500
+          && request.resource.data.updatedAt == request.time)
+        || (isActiveMember() && resource.data.status == 'active' && !resource.data.memberUids.hasAny([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids','updatedAt'])
+          && request.resource.data.memberUids.size() == resource.data.memberUids.size() + 1
+          && request.resource.data.memberUids.hasAll(resource.data.memberUids)
+          && request.resource.data.memberUids.hasAny([request.auth.uid])
+          && request.resource.data.updatedAt == request.time);
+      allow delete: if isAdmin() || (isActiveMember() && resource.data.ownerUid == request.auth.uid);
+    }
+
+    match /communityPosts/{postId} {
+      allow get, list: if isAdmin() || (isActiveMember() && exists(/databases/$(database)/documents/communities/$(resource.data.communityId))
+        && get(/databases/$(database)/documents/communities/$(resource.data.communityId)).data.status == 'active');
+      allow create: if isActiveMember() && request.resource.data.keys().hasOnly(['communityId','uid','displayName','body','imageURL','createdAt','status'])
+        && request.resource.data.uid == request.auth.uid && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 3000
+        && request.resource.data.status == 'published' && request.resource.data.createdAt == request.time
+        && request.resource.data.get('imageURL', '') is string && request.resource.data.get('imageURL', '').size() <= 2000
+        && exists(/databases/$(database)/documents/communities/$(request.resource.data.communityId))
+        && get(/databases/$(database)/documents/communities/$(request.resource.data.communityId)).data.memberUids.hasAny([request.auth.uid]);
+      allow update: if (isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body','status'])
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.communityId == resource.data.communityId
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 3000
+          && request.resource.data.status in ['published','hidden'])
+        || (isActiveMember() && resource.data.uid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['body','imageURL'])
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.communityId == resource.data.communityId
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 3000
+          && request.resource.data.get('imageURL', '') is string && request.resource.data.get('imageURL', '').size() <= 2000);
+      allow delete: if isAdmin() || (isActiveMember() && resource.data.uid == request.auth.uid);
+      match /reactions/{reactionUid} {
+        allow get, list: if isActiveMember() && exists(/databases/$(database)/documents/communities/$(get(/databases/$(database)/documents/communityPosts/$(postId)).data.communityId)) && get(/databases/$(database)/documents/communities/$(get(/databases/$(database)/documents/communityPosts/$(postId)).data.communityId)).data.memberUids.hasAny([request.auth.uid]);
+        allow create, update: if isActiveMember() && reactionUid == request.auth.uid && get(/databases/$(database)/documents/communities/$(get(/databases/$(database)/documents/communityPosts/$(postId)).data.communityId)).data.memberUids.hasAny([request.auth.uid]) && request.resource.data.keys().hasOnly(['uid','type','createdAt']) && request.resource.data.uid == request.auth.uid && request.resource.data.type in ['like','love','haha','wow','sad'] && request.resource.data.createdAt == request.time;
+        allow delete: if isActiveMember() && reactionUid == request.auth.uid;
+      }
+    }
+
+    match /follows/{followId} {
+      allow get, list: if isAdmin() || isActiveMember();
+      allow create: if isActiveMember() && request.resource.data.keys().hasOnly(['followerUid','followingUid','createdAt'])
+        && request.resource.data.followerUid == request.auth.uid
+        && request.resource.data.followingUid is string && request.resource.data.followingUid != request.auth.uid
+        && followId == request.auth.uid + '__' + request.resource.data.followingUid
+        && request.resource.data.createdAt == request.time
+        && exists(/databases/$(database)/documents/publicProfiles/$(request.resource.data.followingUid));
+      allow update: if false;
+      allow delete: if isActiveMember() && resource.data.followerUid == request.auth.uid;
+    }
+
+    match /categories/{categoryId} {
+      allow get, list: if isAdmin() || (isActiveMember() && resource.data.active == true);
+      allow create: if isAdmin() && request.resource.data.keys().hasOnly(['name','tags','active','createdBy','createdAt','updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
+        && request.resource.data.tags is list && request.resource.data.tags.size() <= 20 && request.resource.data.active is bool
+        && request.resource.data.createdBy == request.auth.uid && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','tags','active','updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60
+        && request.resource.data.tags is list && request.resource.data.tags.size() <= 20 && request.resource.data.active is bool && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /adminAnnouncements/{announcementId} {
+      allow get, list: if isAdmin() || (isActiveMember() && resource.data.active == true);
+      allow create: if isAdmin() && request.resource.data.keys().hasOnly(['title','body','active','createdBy','createdAt','updatedAt'])
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 120
+        && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000
+        && request.resource.data.active == true && request.resource.data.createdBy == request.auth.uid && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','updatedAt']) && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    // Deny all access to any collection/document not explicitly listed above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
